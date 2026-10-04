@@ -134,7 +134,7 @@ export const ExamEditor: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Link
           to="/exams"
           className="inline-flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-800 transition"
@@ -153,7 +153,7 @@ export const ExamEditor: React.FC = () => {
           </button>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Question</span>
@@ -164,7 +164,7 @@ export const ExamEditor: React.FC = () => {
       {exam && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
               {exam.subjectName}
             </span>
             <h2 className="text-xl font-bold text-slate-900 mt-2">{exam.title}</h2>
@@ -193,7 +193,7 @@ export const ExamEditor: React.FC = () => {
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <span className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center">
+                  <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center">
                     {idx + 1}
                   </span>
                   <span className="text-xs font-semibold uppercase text-slate-500">
@@ -264,7 +264,7 @@ export const ExamEditor: React.FC = () => {
                   <select
                     value={form.questionType}
                     onChange={(e) => setForm({ ...form, questionType: e.target.value as any })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="multiple_choice">Multiple Choice (Pilihan Ganda)</option>
                     <option value="true_false">True / False (Benar / Salah)</option>
@@ -280,7 +280,7 @@ export const ExamEditor: React.FC = () => {
                     max={50}
                     value={form.points}
                     onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -292,7 +292,7 @@ export const ExamEditor: React.FC = () => {
                   required
                   value={form.questionText}
                   onChange={(e) => setForm({ ...form, questionText: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="Enter the problem statement or question..."
                 />
               </div>
@@ -313,7 +313,7 @@ export const ExamEditor: React.FC = () => {
                           placeholder={`Option ${letter} text...`}
                           value={String(form[keyName])}
                           onChange={(e) => setForm({ ...form, [keyName]: e.target.value })}
-                          className="flex-1 border border-slate-300 rounded-xl px-3 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:outline-none text-xs"
+                          className="flex-1 border border-slate-300 rounded-xl px-3 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-xs"
                         />
                         <label className="flex items-center space-x-1 text-xs text-slate-600 cursor-pointer">
                           <input
@@ -342,6 +342,7 @@ export const ExamEditor: React.FC = () => {
                         value="Benar"
                         checked={form.correctAnswer === 'Benar'}
                         onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                        className="text-emerald-600 focus:ring-emerald-500"
                       />
                       <span>Benar (True)</span>
                     </label>
@@ -352,6 +353,7 @@ export const ExamEditor: React.FC = () => {
                         value="Salah"
                         checked={form.correctAnswer === 'Salah'}
                         onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                        className="text-emerald-600 focus:ring-emerald-500"
                       />
                       <span>Salah (False)</span>
                     </label>
@@ -366,7 +368,7 @@ export const ExamEditor: React.FC = () => {
                     rows={2}
                     value={form.correctAnswer}
                     onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     placeholder="Key concepts required for maximum score..."
                   />
                 </div>
@@ -382,7 +384,7 @@ export const ExamEditor: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
                 >
                   Save Question
                 </button>
@@ -409,14 +411,14 @@ export const ExamEditor: React.FC = () => {
             </p>
 
             <form onSubmit={handleImportExcel} className="space-y-4 text-sm">
-              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-indigo-500 transition">
+              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-500 transition">
                 <UploadCloud className="w-10 h-10 text-slate-400 mx-auto mb-2" />
                 <input
                   type="file"
                   accept=".xlsx, .xls"
                   required
                   onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
-                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700"
+                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                 />
               </div>
 
@@ -431,7 +433,7 @@ export const ExamEditor: React.FC = () => {
                 <button
                   type="submit"
                   disabled={importLoading || !excelFile}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {importLoading ? 'Uploading & Parsing...' : 'Import Questions'}
                 </button>

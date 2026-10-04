@@ -163,8 +163,8 @@ export const ExamRunner: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-sm font-semibold tracking-wide">Initializing secure CBT exam runner...</p>
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm font-semibold tracking-wide">Menyiapkan ruang ujian CBT aman...</p>
         </div>
       </div>
     );
@@ -179,7 +179,7 @@ export const ExamRunner: React.FC = () => {
           <p className="text-sm text-slate-300">{error}</p>
           <button
             onClick={() => navigate('/exams')}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl text-xs transition cursor-pointer"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl text-xs transition cursor-pointer"
           >
             Return to Exam List
           </button>
@@ -196,26 +196,26 @@ export const ExamRunner: React.FC = () => {
             <Award className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold">Examination Submitted!</h2>
-            <p className="text-xs text-slate-400 mt-1">Your responses have been processed.</p>
+            <h2 className="text-2xl font-bold">Ujian Selesai Dikirim!</h2>
+            <p className="text-xs text-slate-400 mt-1">Jawaban Anda telah tersimpan dan dinilai oleh sistem.</p>
           </div>
 
           <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/60 space-y-3">
-            <div className="text-xs text-slate-400">Final Score</div>
-            <div className="text-4xl font-extrabold text-indigo-400">{submittedResult.score} / 100</div>
+            <div className="text-xs text-slate-400">Nilai Akhir</div>
+            <div className="text-4xl font-extrabold text-emerald-400">{submittedResult.score} / 100</div>
             <div className="text-xs font-semibold">
               Status:{' '}
               <span className={submittedResult.passed ? 'text-emerald-400' : 'text-rose-400'}>
-                {submittedResult.passed ? 'PASSED (LULUS)' : 'DID NOT PASS (TIDAK LULUS)'}
+                {submittedResult.passed ? 'LULUS (PASSED)' : 'REMIDIAL (NOT PASSED)'}
               </span>
             </div>
           </div>
 
           <button
             onClick={() => navigate('/exams')}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl text-sm transition cursor-pointer"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            Return to Dashboard
+            Kembali ke Halaman Ujian
           </button>
         </div>
       </div>
@@ -232,17 +232,17 @@ export const ExamRunner: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col select-none">
       {/* Top Proctoring Header */}
-      <header className="bg-slate-800/90 backdrop-blur-md border-b border-slate-700/80 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
+      <header className="bg-slate-800/90 backdrop-blur-md border-b border-slate-700/80 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow-md shadow-indigo-600/30">
+          <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white text-sm shadow-md shadow-emerald-600/30">
             CBT
           </div>
           <div>
-            <h1 className="text-sm font-bold text-white">{session.examTitle}</h1>
-            <div className="flex items-center space-x-3 text-xs text-slate-400 mt-0.5">
-              <span>Candidate Active</span>
+            <h1 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-md">{session.examTitle}</h1>
+            <div className="flex items-center space-x-2 sm:space-x-3 text-xs text-slate-400 mt-0.5">
+              <span>Sesi Aktif</span>
               <span>•</span>
-              <span className="text-emerald-400 font-medium">Autosave Connected</span>
+              <span className="text-emerald-400 font-medium">Tersimpan Otomatis</span>
             </div>
           </div>
         </div>
@@ -253,7 +253,7 @@ export const ExamRunner: React.FC = () => {
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl border font-mono text-sm font-bold shadow-xs ${
               secondsLeft < 300
                 ? 'bg-rose-500/20 border-rose-500/50 text-rose-400 animate-pulse'
-                : 'bg-slate-900 border-slate-700 text-indigo-400'
+                : 'bg-slate-900 border-slate-700 text-emerald-400'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -281,13 +281,13 @@ export const ExamRunner: React.FC = () => {
       )}
 
       {/* Main Examination Area */}
-      <div className="flex-1 flex max-w-7xl mx-auto w-full p-6 gap-6">
+      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 sm:p-6 gap-6">
         {/* Left Side: Question Display */}
-        <div className="flex-1 flex flex-col justify-between bg-slate-800/60 border border-slate-700/60 rounded-3xl p-8 shadow-xl">
+        <div className="flex-1 flex flex-col justify-between bg-slate-800/60 border border-slate-700/60 rounded-3xl p-5 sm:p-8 shadow-xl">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-slate-700/80 mb-6">
-              <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
-                Question {currentIndex + 1} of {session.questions.length}
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                Soal {currentIndex + 1} dari {session.questions.length}
               </span>
               <div className="flex items-center space-x-2">
                 {saving ? (
@@ -319,14 +319,14 @@ export const ExamRunner: React.FC = () => {
                       onClick={() => handleSelectOption(currentQ.id, opt)}
                       className={`w-full text-left p-4 rounded-2xl border transition duration-150 flex items-center space-x-4 cursor-pointer ${
                         isSelected
-                          ? 'bg-indigo-600/20 border-indigo-500 text-white ring-1 ring-indigo-500 font-semibold'
+                          ? 'bg-emerald-600/20 border-emerald-500 text-white ring-1 ring-emerald-500 font-semibold'
                           : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700/60 hover:text-white'
                       }`}
                     >
                       <span
                         className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 ${
                           isSelected
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-slate-700 border border-slate-600 text-slate-300'
                         }`}
                       >
@@ -350,7 +350,7 @@ export const ExamRunner: React.FC = () => {
                       onClick={() => handleSelectOption(currentQ.id, val)}
                       className={`p-6 rounded-2xl border text-center font-bold text-base transition cursor-pointer ${
                         isSelected
-                          ? 'bg-indigo-600/20 border-indigo-500 text-white ring-1 ring-indigo-500'
+                          ? 'bg-emerald-600/20 border-emerald-500 text-white ring-1 ring-emerald-500'
                           : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700/60'
                       }`}
                     >
@@ -369,7 +369,7 @@ export const ExamRunner: React.FC = () => {
                   value={answers[currentQ.id] || ''}
                   onChange={(e) => handleSelectOption(currentQ.id, e.target.value)}
                   placeholder="Type your response here..."
-                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-600"
+                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-600"
                 />
               </div>
             )}
@@ -389,9 +389,9 @@ export const ExamRunner: React.FC = () => {
             {currentIndex < session.questions.length - 1 ? (
               <button
                 onClick={() => setCurrentIndex((prev) => Math.min(session.questions.length - 1, prev + 1))}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-indigo-600/25 transition cursor-pointer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-emerald-600/25 transition cursor-pointer"
               >
-                <span>Next Question</span>
+                <span>Soal Berikutnya</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
@@ -407,16 +407,16 @@ export const ExamRunner: React.FC = () => {
         </div>
 
         {/* Right Side: Number Palette Grid */}
-        <div className="w-72 bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+        <div className="w-full lg:w-72 bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Question Navigator
+              Navigasi Soal
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Answered: <strong>{answeredTotal}</strong> / {session.questions.length}
+              Terjawab: <strong>{answeredTotal}</strong> / {session.questions.length}
             </p>
 
-            <div className="grid grid-cols-4 gap-2.5 max-h-[420px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-4 gap-2.5 max-h-[300px] lg:max-h-[420px] overflow-y-auto pr-1">
               {session.questions.map((q, idx) => {
                 const isAnswered = answers[q.id] !== undefined && answers[q.id] !== '';
                 const isCurrent = idx === currentIndex;
@@ -427,7 +427,7 @@ export const ExamRunner: React.FC = () => {
                     onClick={() => setCurrentIndex(idx)}
                     className={`h-10 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center ${
                       isCurrent
-                        ? 'ring-2 ring-indigo-400 bg-indigo-600 text-white shadow-md'
+                        ? 'ring-2 ring-emerald-400 bg-emerald-600 text-white shadow-md'
                         : isAnswered
                         ? 'bg-emerald-600/30 border border-emerald-500/50 text-emerald-300'
                         : 'bg-slate-700/50 border border-slate-600/60 text-slate-400 hover:bg-slate-700 hover:text-white'

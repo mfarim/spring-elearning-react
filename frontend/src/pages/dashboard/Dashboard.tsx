@@ -102,86 +102,89 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#059669] to-[#064e3b] p-6 sm:p-8 text-white shadow-lg">
         <div className="relative z-10 max-w-2xl">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 mb-4">
-            Academic Session 2026/2027
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-emerald-100 border border-white/20 mb-4">
+            Tahun Ajaran 2026/2027
           </span>
-          <h2 className="text-3xl font-extrabold tracking-tight">
-            Welcome back, {user?.name}!
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Selamat Datang, {user?.name}!
           </h2>
-          <p className="mt-2 text-indigo-100/90 text-sm leading-relaxed">
+          <p className="mt-2 text-emerald-100/90 text-sm leading-relaxed">
             {isAdmin
-              ? 'Manage academic curriculums, supervise teachers & students, post announcements, and oversee school-wide CBT operations.'
+              ? 'Kelola kurikulum akademik, supervisi guru & siswa, publikasikan pengumuman, dan pantau operasional ujian CBT sekolah.'
               : isTeacher
-              ? 'Design interactive examinations, manage question banks, review student submissions, and host discussions.'
-              : 'Access your classroom learning materials, take scheduled CBT examinations with secure anti-cheat, and submit assignments.'}
+              ? 'Rancang ujian CBT interaktif, kelola bank soal, periksa jawaban siswa, dan unggah materi pembelajaran.'
+              : 'Akses materi pembelajaran kelas, ikuti ujian CBT terjadwal dengan sistem anti-cheat, dan kumpulkan tugas.'}
           </p>
         </div>
+        {/* Subtle decorative circles */}
+        <div className="absolute -top-12 -right-12 w-56 h-56 bg-white/10 rounded-full pointer-events-none" />
+        <div className="absolute -bottom-20 -left-12 w-64 h-64 bg-white/5 rounded-full pointer-events-none" />
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {isAdmin && (
           <>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4 hover:shadow-md transition">
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500">Total Classrooms</p>
+                <p className="text-xs font-medium text-slate-500">Total Kelas</p>
                 <h3 className="text-2xl font-bold text-slate-800">{stats.classrooms}</h3>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
-              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4 hover:shadow-md transition">
+              <div className="p-3 bg-teal-50 text-teal-600 rounded-xl">
                 <BookMarked className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500">Total Subjects</p>
+                <p className="text-xs font-medium text-slate-500">Mata Pelajaran</p>
                 <h3 className="text-2xl font-bold text-slate-800">{stats.subjects}</h3>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
-              <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4 hover:shadow-md transition">
+              <div className="p-3 bg-green-50 text-green-600 rounded-xl">
                 <Users className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500">Registered Students</p>
+                <p className="text-xs font-medium text-slate-500">Siswa Terdaftar</p>
                 <h3 className="text-2xl font-bold text-slate-800">{stats.students}</h3>
               </div>
             </div>
           </>
         )}
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4 hover:shadow-md transition">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
             <FileCheck2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">CBT Examinations</p>
+            <p className="text-xs font-medium text-slate-500">Ujian CBT</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.exams}</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4 hover:shadow-md transition">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Learning Materials</p>
+            <p className="text-xs font-medium text-slate-500">Materi Pelajaran</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.materials}</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4 hover:shadow-md transition">
+          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
             <MessageSquareShare className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Active Assignments</p>
+            <p className="text-xs font-medium text-slate-500">Tugas Aktif</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.assignments}</h3>
           </div>
         </div>
@@ -189,74 +192,74 @@ export const Dashboard: React.FC = () => {
 
       {/* Quick Launch Cards */}
       <div>
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Navigation</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <h3 className="text-lg font-bold text-slate-900 mb-4">Navigasi Cepat</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           <Link
             to="/exams"
-            className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-indigo-500 shadow-xs hover:shadow-md transition duration-200"
+            className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition duration-200"
           >
             <div className="flex items-center justify-between">
               <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
                 <FileCheck2 className="w-6 h-6" />
               </div>
-              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
+              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
             </div>
             <h4 className="mt-4 text-base font-bold text-slate-800">
-              {isTeacher || isAdmin ? 'CBT Exam Management' : 'Take CBT Examinations'}
+              {isTeacher || isAdmin ? 'Manajemen Ujian CBT' : 'Ikuti Ujian CBT'}
             </h4>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 leading-relaxed">
               {isTeacher || isAdmin
-                ? 'Create questions, manage schedules, and open live monitor rooms.'
-                : 'Join live exam sessions with fullscreen proctoring and autosave.'}
+                ? 'Buat bank soal, atur jadwal ujian, dan buka ruang monitoring live ujian siswa.'
+                : 'Bergabung ke sesi ujian CBT dengan pengawasan anti-cheat dan autosave otomatis.'}
             </p>
           </Link>
 
           <Link
             to="/materials"
-            className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-indigo-500 shadow-xs hover:shadow-md transition duration-200"
+            className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition duration-200"
           >
             <div className="flex items-center justify-between">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
+              <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
             </div>
-            <h4 className="mt-4 text-base font-bold text-slate-800">Learning Materials</h4>
-            <p className="mt-1 text-xs text-slate-500">
-              Access digital syllabus, textbooks, and interactive lecture modules.
+            <h4 className="mt-4 text-base font-bold text-slate-800">Materi Pelajaran</h4>
+            <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+              Akses silabus digital, modul bacaan, dan materi pembelajaran interaktif.
             </p>
           </Link>
 
           {!isAdmin && !isTeacher ? (
             <Link
               to="/grades"
-              className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-indigo-500 shadow-xs hover:shadow-md transition duration-200"
+              className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition duration-200"
             >
               <div className="flex items-center justify-between">
                 <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
                   <Award className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
               </div>
-              <h4 className="mt-4 text-base font-bold text-slate-800">Grades & Academic Report</h4>
-              <p className="mt-1 text-xs text-slate-500">
-                View your complete gradebook, GPA, and subject breakdown.
+              <h4 className="mt-4 text-base font-bold text-slate-800">Rapor & Nilai Akademik</h4>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Lihat riwayat nilai tugas, ujian CBT, dan transkrip rapor hasil belajar Anda.
               </p>
             </Link>
           ) : (
             <Link
               to="/assignments"
-              className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-indigo-500 shadow-xs hover:shadow-md transition duration-200"
+              className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition duration-200"
             >
               <div className="flex items-center justify-between">
-                <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
                   <Clock className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
               </div>
-              <h4 className="mt-4 text-base font-bold text-slate-800">Assignments & Discussions</h4>
-              <p className="mt-1 text-xs text-slate-500">
-                Submit homework files, receive grades, and participate in classroom forums.
+              <h4 className="mt-4 text-base font-bold text-slate-800">Tugas & Diskusi</h4>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Kumpulkan file tugas, beri penilaian siswa, dan berdiskusi di forum kelas.
               </p>
             </Link>
           )}

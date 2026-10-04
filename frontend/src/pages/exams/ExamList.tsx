@@ -100,19 +100,19 @@ export const ExamList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">CBT Computer-Based Testing</h2>
-          <p className="text-xs text-slate-500 mt-1">High-integrity online examinations with anti-cheat and live telemetry</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Ujian CBT (Computer-Based Test)</h2>
+          <p className="text-xs text-slate-500 mt-1">Ujian online interaktif dengan proteksi anti-cheat dan telemetri langsung</p>
         </div>
 
         {(isAdmin || isTeacher) && (
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-2 text-sm cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Examination</span>
+            <span>Buat Ujian Baru</span>
           </button>
         )}
       </div>
@@ -130,11 +130,11 @@ export const ExamList: React.FC = () => {
           {exams.map((exam) => (
             <div
               key={exam.id}
-              className="bg-white rounded-2xl border border-slate-200 hover:border-indigo-400 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-slate-200 hover:border-emerald-400 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                     {exam.subjectName}
                   </span>
                   {(isAdmin || isTeacher) ? (
@@ -195,11 +195,11 @@ export const ExamList: React.FC = () => {
                       to={`/exams/${exam.id}/questions`}
                       className="flex-1 text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs transition"
                     >
-                      Questions ({exam.totalQuestions})
+                      Soal ({exam.totalQuestions})
                     </Link>
                     <Link
                       to={`/exams/${exam.id}/monitor`}
-                      className="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center space-x-1"
+                      className="flex-1 text-center bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center space-x-1"
                     >
                       <MonitorPlay className="w-3.5 h-3.5 mr-1" />
                       <span>Live Monitor</span>
@@ -211,23 +211,23 @@ export const ExamList: React.FC = () => {
                       <div className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
                         <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-700">
                           <CheckCircle className="w-4 h-4 text-emerald-600" />
-                          <span>Score: {exam.studentScore ?? 0}/100</span>
+                          <span>Nilai: {exam.studentScore ?? 0}/100</span>
                         </div>
                         <span
                           className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                             exam.studentPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                           }`}
                         >
-                          {exam.studentPassed ? 'PASSED' : 'FAILED'}
+                          {exam.studentPassed ? 'LULUS' : 'REMIDI'}
                         </span>
                       </div>
                     ) : (
                       <Link
                         to={`/exams/${exam.id}/runner`}
-                        className="w-full text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md shadow-indigo-600/20 transition flex items-center justify-center space-x-2"
+                        className="w-full text-center bg-gradient-to-r from-[#059669] to-[#065f46] hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md shadow-emerald-700/20 transition flex items-center justify-center space-x-2"
                       >
                         <Play className="w-4 h-4 fill-white" />
-                        <span>{exam.studentAttemptStatus === 'in_progress' ? 'Resume Exam' : 'Enter CBT Exam'}</span>
+                        <span>{exam.studentAttemptStatus === 'in_progress' ? 'Lanjutkan Ujian' : 'Mulai Ujian CBT'}</span>
                       </Link>
                     )}
                   </>
@@ -259,7 +259,7 @@ export const ExamList: React.FC = () => {
                   placeholder="e.g. Penilaian Akhir Semester Ganjil 2026"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -270,7 +270,7 @@ export const ExamList: React.FC = () => {
                     required
                     value={form.subjectId}
                     onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Subject --</option>
                     {subjects.map((s) => (
@@ -286,7 +286,7 @@ export const ExamList: React.FC = () => {
                     required
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Classroom --</option>
                     {classrooms.map((c) => (
@@ -308,7 +308,7 @@ export const ExamList: React.FC = () => {
                     max={240}
                     value={form.durationMinutes}
                     onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -320,7 +320,7 @@ export const ExamList: React.FC = () => {
                     max={100}
                     value={form.passingScore}
                     onChange={(e) => setForm({ ...form, passingScore: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -333,7 +333,7 @@ export const ExamList: React.FC = () => {
                     required
                     value={form.startAt}
                     onChange={(e) => setForm({ ...form, startAt: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -343,7 +343,7 @@ export const ExamList: React.FC = () => {
                     required
                     value={form.endAt}
                     onChange={(e) => setForm({ ...form, endAt: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -354,7 +354,7 @@ export const ExamList: React.FC = () => {
                     type="checkbox"
                     checked={form.shuffleQuestions}
                     onChange={(e) => setForm({ ...form, shuffleQuestions: e.target.checked })}
-                    className="rounded text-indigo-600 focus:ring-indigo-500"
+                    className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>Randomize Questions</span>
                 </label>
@@ -363,7 +363,7 @@ export const ExamList: React.FC = () => {
                     type="checkbox"
                     checked={form.shuffleOptions}
                     onChange={(e) => setForm({ ...form, shuffleOptions: e.target.checked })}
-                    className="rounded text-indigo-600 focus:ring-indigo-500"
+                    className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>Randomize Options</span>
                 </label>
@@ -379,9 +379,9 @@ export const ExamList: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Create & Publish Exam
+                  Buat & Publikasikan Ujian
                 </button>
               </div>
             </form>

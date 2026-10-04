@@ -133,7 +133,7 @@ export const AssignmentDetail: React.FC = () => {
     return (
       <div className="p-12 text-center text-slate-500">
         <p>Assignment not found.</p>
-        <Link to="/assignments" className="text-indigo-600 font-semibold mt-2 inline-block">
+        <Link to="/assignments" className="text-emerald-600 hover:text-emerald-700 font-semibold mt-2 inline-block">
           Back to Assignments
         </Link>
       </div>
@@ -153,12 +153,12 @@ export const AssignmentDetail: React.FC = () => {
       {/* Assignment Header Card */}
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
             {assignment.subjectName}
           </span>
           <div className="flex items-center space-x-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
             <Clock className="w-3.5 h-3.5" />
-            <span>Due: {new Date(assignment.dueDate).toLocaleString()}</span>
+            <span>Batas: {new Date(assignment.dueDate).toLocaleString()}</span>
           </div>
         </div>
 
@@ -177,24 +177,24 @@ export const AssignmentDetail: React.FC = () => {
       {!isAdmin && !isTeacher && (
         <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4">
           <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
-            <FileCheck className="w-5 h-5 text-indigo-600" />
-            <span>My Submission</span>
+            <FileCheck className="w-5 h-5 text-emerald-600" />
+            <span>Pengumpulan Tugas Saya</span>
           </h3>
 
           {assignment.hasSubmitted ? (
             <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
               <div className="flex items-center space-x-2 text-emerald-800 font-bold text-sm">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
-                <span>Assignment Submitted Successfully</span>
+                <span>Tugas Berhasil Dikumpulkan</span>
               </div>
               <p className="text-xs text-emerald-700">
-                Turned in on: {new Date(assignment.studentSubmittedAt || '').toLocaleString()}
+                Diserahkan pada: {new Date(assignment.studentSubmittedAt || '').toLocaleString()}
               </p>
               {assignment.studentScore !== null && assignment.studentScore !== undefined && (
                 <div className="mt-3 pt-3 border-t border-emerald-200 flex items-center space-x-2">
                   <Award className="w-5 h-5 text-emerald-700" />
                   <span className="text-sm font-bold text-emerald-900">
-                    Grade: {assignment.studentScore} / {assignment.maxScore}
+                    Nilai: {assignment.studentScore} / {assignment.maxScore}
                   </span>
                 </div>
               )}
@@ -202,35 +202,35 @@ export const AssignmentDetail: React.FC = () => {
           ) : (
             <form onSubmit={handleStudentSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Upload Work / Attachment</label>
-                <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-indigo-500 transition">
+                <label className="block font-semibold text-slate-700 mb-1">Unggah Berkas / Dokumen Tugas</label>
+                <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-500 transition">
                   <UploadCloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <input
                     type="file"
                     required
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700"
+                    className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Submission Notes (Optional)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
                 <textarea
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Additional explanation or commentary for instructor..."
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  placeholder="Catatan tambahan untuk guru pengampu..."
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting || !file}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-md shadow-indigo-600/25 transition cursor-pointer disabled:opacity-50"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-md shadow-emerald-600/25 transition cursor-pointer disabled:opacity-50"
               >
-                {submitting ? 'Submitting File...' : 'Turn In Assignment'}
+                {submitting ? 'Mengunggah Berkas...' : 'Kumpulkan Tugas'}
               </button>
             </form>
           )}
@@ -247,71 +247,73 @@ export const AssignmentDetail: React.FC = () => {
           </div>
 
           {submissions.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">No submissions received yet.</div>
+            <div className="p-8 text-center text-slate-400 text-sm">Belum ada tugas yang dikumpulkan.</div>
           ) : (
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Student</th>
-                  <th className="px-6 py-4">Submission Date</th>
-                  <th className="px-6 py-4">File</th>
-                  <th className="px-6 py-4">Score</th>
-                  <th className="px-6 py-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {submissions.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50/80 transition">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900">{s.studentName}</div>
-                      <div className="text-xs font-mono text-slate-400">NIS: {s.studentNis}</div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 text-xs">
-                      {new Date(s.submittedAt).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      {s.filePath ? (
-                        <a
-                          href={`/api/v1/files/${s.filePath}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center space-x-1 text-xs text-indigo-600 font-semibold hover:underline"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download</span>
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {s.score !== null && s.score !== undefined ? (
-                        <span className="font-bold text-emerald-700 text-xs bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                          {s.score} / {assignment.maxScore}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-semibold">
-                          Needs Grading
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedSub(s);
-                          setGradeScore(s.score ?? 100);
-                          setGradeFeedback(s.feedback || '');
-                          setGradeModalOpen(true);
-                        }}
-                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer"
-                      >
-                        Grade Work
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm min-w-[650px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-6 py-4">Siswa</th>
+                    <th className="px-6 py-4">Tanggal Pengumpulan</th>
+                    <th className="px-6 py-4">Berkas</th>
+                    <th className="px-6 py-4">Nilai</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {submissions.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50/80 transition">
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-slate-900">{s.studentName}</div>
+                        <div className="text-xs font-mono text-slate-400">NIS: {s.studentNis}</div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 text-xs">
+                        {new Date(s.submittedAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        {s.filePath ? (
+                          <a
+                            href={`/api/v1/files/${s.filePath}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center space-x-1 text-xs text-emerald-600 font-semibold hover:underline"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Unduh</span>
+                          </a>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {s.score !== null && s.score !== undefined ? (
+                          <span className="font-bold text-emerald-700 text-xs bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                            {s.score} / {assignment.maxScore}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-semibold">
+                            Belum Dinilai
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => {
+                            setSelectedSub(s);
+                            setGradeScore(s.score ?? 100);
+                            setGradeFeedback(s.feedback || '');
+                            setGradeModalOpen(true);
+                          }}
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer border border-emerald-200"
+                        >
+                          Beri Nilai
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -319,8 +321,8 @@ export const AssignmentDetail: React.FC = () => {
       {/* Classroom Discussion Board */}
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-6">
         <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
-          <MessageSquare className="w-5 h-5 text-indigo-600" />
-          <span>Classroom Discussion Board ({discussions.length})</span>
+          <MessageSquare className="w-5 h-5 text-emerald-600" />
+          <span>Forum Diskusi Kelas ({discussions.length})</span>
         </h3>
 
         <form onSubmit={handlePostDiscussion} className="flex gap-3">
@@ -329,15 +331,15 @@ export const AssignmentDetail: React.FC = () => {
             required
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Ask a question or start a topic discussion..."
-            className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+            placeholder="Ajukan pertanyaan atau diskusikan tugas ini..."
+            className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
           />
           <button
             type="submit"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Post</span>
+            <span>Kirim</span>
           </button>
         </form>
 
@@ -377,7 +379,7 @@ export const AssignmentDetail: React.FC = () => {
                   max={assignment.maxScore}
                   value={gradeScore}
                   onChange={(e) => setGradeScore(Number(e.target.value))}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -388,7 +390,7 @@ export const AssignmentDetail: React.FC = () => {
                   value={gradeFeedback}
                   onChange={(e) => setGradeFeedback(e.target.value)}
                   placeholder="Suggestions, feedback, and rubric comments..."
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -402,9 +404,9 @@ export const AssignmentDetail: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Save Grade
+                  Simpan Nilai
                 </button>
               </div>
             </form>

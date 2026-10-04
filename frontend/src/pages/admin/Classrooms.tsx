@@ -94,73 +94,77 @@ export const Classrooms: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Classroom Management</h2>
-          <p className="text-xs text-slate-500 mt-1">Organize student classes and assign homeroom mentors</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Kelas</h2>
+          <p className="text-xs text-slate-500 mt-1">Kelola rombongan belajar dan tentukan wali kelas</p>
         </div>
         <button
           onClick={() => openModal()}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-2 text-sm cursor-pointer"
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Classroom</span>
+          <span>Tambah Kelas</span>
         </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading classrooms...</div>
+          <div className="p-8 text-center text-slate-500">Memuat data kelas...</div>
         ) : classrooms.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <GraduationCap className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">No classrooms configured yet</p>
-            <p className="text-xs mt-1 text-slate-400">Click "Add Classroom" to create your first class.</p>
+            <p className="text-base font-medium">Belum ada kelas yang terdaftar</p>
+            <p className="text-xs mt-1 text-slate-400">Klik "Tambah Kelas" untuk menambahkan kelas pertama.</p>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Classroom Name</th>
-                <th className="px-6 py-4">Level</th>
-                <th className="px-6 py-4">Capacity</th>
-                <th className="px-6 py-4">Academic Year</th>
-                <th className="px-6 py-4">Homeroom Teacher</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {classrooms.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-6 py-4 font-semibold text-slate-900">{c.name}</td>
-                  <td className="px-6 py-4 text-slate-600">Grade {c.level}</td>
-                  <td className="px-6 py-4 text-slate-600">{c.capacity} students</td>
-                  <td className="px-6 py-4 text-slate-600">{c.academicYear}</td>
-                  <td className="px-6 py-4 text-slate-600">
-                    {c.homeroomTeacherName ? (
-                      <span className="font-medium text-slate-800">{c.homeroomTeacherName}</span>
-                    ) : (
-                      <span className="text-slate-400 italic">Unassigned</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => openModal(c)}
-                      className="text-slate-500 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm min-w-[600px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Nama Kelas</th>
+                  <th className="px-6 py-4">Tingkat</th>
+                  <th className="px-6 py-4">Kapasitas</th>
+                  <th className="px-6 py-4">Tahun Ajaran</th>
+                  <th className="px-6 py-4">Wali Kelas</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {classrooms.map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4 font-semibold text-slate-900">{c.name}</td>
+                    <td className="px-6 py-4 text-slate-600">Kelas {c.level}</td>
+                    <td className="px-6 py-4 text-slate-600">{c.capacity} siswa</td>
+                    <td className="px-6 py-4 text-slate-600">{c.academicYear}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {c.homeroomTeacherName ? (
+                        <span className="font-medium text-slate-800">{c.homeroomTeacherName}</span>
+                      ) : (
+                        <span className="text-slate-400 italic">Belum ditentukan</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => openModal(c)}
+                        className="text-slate-500 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
+                        title="Edit Kelas"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                        title="Hapus Kelas"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -175,25 +179,25 @@ export const Classrooms: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-bold text-slate-900 mb-4">
-              {editingClassroom ? 'Edit Classroom' : 'Create New Classroom'}
+              {editingClassroom ? 'Edit Kelas' : 'Tambah Kelas Baru'}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Classroom Name</label>
+                <label className="block font-semibold text-slate-700 mb-1">Nama Kelas</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. X MIPA 1"
+                  placeholder="Contoh: X MIPA 1"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Level / Grade</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Tingkat / Grade</label>
                   <input
                     type="number"
                     required
@@ -201,11 +205,11 @@ export const Classrooms: React.FC = () => {
                     max={12}
                     value={form.level}
                     onChange={(e) => setForm({ ...form, level: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Capacity</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Kapasitas Siswa</label>
                   <input
                     type="number"
                     required
@@ -213,30 +217,30 @@ export const Classrooms: React.FC = () => {
                     max={60}
                     value={form.capacity}
                     onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Academic Year</label>
+                <label className="block font-semibold text-slate-700 mb-1">Tahun Ajaran</label>
                 <input
                   type="text"
                   required
                   value={form.academicYear}
                   onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Homeroom Teacher</label>
+                <label className="block font-semibold text-slate-700 mb-1">Wali Kelas</label>
                 <select
                   value={form.homeroomTeacherId}
                   onChange={(e) => setForm({ ...form, homeroomTeacherId: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 >
-                  <option value="">-- No Homeroom Teacher --</option>
+                  <option value="">-- Pilih Wali Kelas --</option>
                   {teachers.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name} (NIP: {t.nip})
@@ -251,13 +255,13 @@ export const Classrooms: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Save Classroom
+                  Simpan Kelas
                 </button>
               </div>
             </form>

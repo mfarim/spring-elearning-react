@@ -94,71 +94,79 @@ export const Subjects: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Subject Management</h2>
-          <p className="text-xs text-slate-500 mt-1">Curriculum subjects, credit points, and teacher assignments</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Mata Pelajaran</h2>
+          <p className="text-xs text-slate-500 mt-1">Daftar kurikulum, beban SKS, dan guru pengampu</p>
         </div>
         <button
           onClick={() => openModal()}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-2 text-sm cursor-pointer"
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Subject</span>
+          <span>Tambah Mapel</span>
         </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading subjects...</div>
+          <div className="p-8 text-center text-slate-500">Memuat mata pelajaran...</div>
         ) : subjects.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <BookMarked className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">No subjects found</p>
-            <p className="text-xs mt-1 text-slate-400">Click "Add Subject" to create the first curriculum course.</p>
+            <p className="text-base font-medium">Belum ada mata pelajaran</p>
+            <p className="text-xs mt-1 text-slate-400">Klik "Tambah Mapel" untuk membuat kurikulum pertama.</p>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Code</th>
-                <th className="px-6 py-4">Subject Name</th>
-                <th className="px-6 py-4">Credits</th>
-                <th className="px-6 py-4">Assigned Teacher</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {subjects.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-6 py-4 font-mono font-bold text-indigo-600">{s.code}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-900">{s.name}</td>
-                  <td className="px-6 py-4 text-slate-600">{s.credits} SKS</td>
-                  <td className="px-6 py-4 text-slate-600">
-                    {s.teacherName ? (
-                      <span className="font-medium text-slate-800">{s.teacherName}</span>
-                    ) : (
-                      <span className="text-slate-400 italic">Unassigned</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => openModal(s)}
-                      className="text-slate-500 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm min-w-[600px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Kode</th>
+                  <th className="px-6 py-4">Nama Mata Pelajaran</th>
+                  <th className="px-6 py-4">Beban SKS</th>
+                  <th className="px-6 py-4">Guru Pengampu</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {subjects.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4">
+                      <span className="font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                        {s.code}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">{s.name}</td>
+                    <td className="px-6 py-4 text-slate-600">{s.credits} SKS</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {s.teacherName ? (
+                        <span className="font-medium text-slate-800">{s.teacherName}</span>
+                      ) : (
+                        <span className="text-slate-400 italic">Belum ditentukan</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => openModal(s)}
+                        className="text-slate-500 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
+                        title="Edit Mapel"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                        title="Hapus Mapel"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -172,24 +180,24 @@ export const Subjects: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-bold text-slate-900 mb-4">
-              {editingSubject ? 'Edit Subject' : 'Add Subject'}
+              {editingSubject ? 'Edit Mata Pelajaran' : 'Tambah Mata Pelajaran'}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Subject Code</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Kode Mapel</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. MAT-10"
+                    placeholder="Contoh: MAT-10"
                     value={form.code}
                     onChange={(e) => setForm({ ...form, code: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Credits</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Beban SKS</label>
                   <input
                     type="number"
                     required
@@ -197,31 +205,31 @@ export const Subjects: React.FC = () => {
                     max={6}
                     value={form.credits}
                     onChange={(e) => setForm({ ...form, credits: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Subject Name</label>
+                <label className="block font-semibold text-slate-700 mb-1">Nama Mata Pelajaran</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Matematika Wajib"
+                  placeholder="Contoh: Matematika Wajib"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Assigned Teacher</label>
+                <label className="block font-semibold text-slate-700 mb-1">Guru Pengampu</label>
                 <select
                   value={form.teacherId}
                   onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 >
-                  <option value="">-- No Teacher Assigned --</option>
+                  <option value="">-- Pilih Guru Pengampu --</option>
                   {teachers.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name} (NIP: {t.nip})
@@ -231,13 +239,13 @@ export const Subjects: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Description</label>
+                <label className="block font-semibold text-slate-700 mb-1">Deskripsi Silabus</label>
                 <textarea
                   rows={3}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                  placeholder="Course summary and objectives..."
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+                  placeholder="Ringkasan kompetensi dasar dan tujuan pembelajaran..."
                 />
               </div>
 
@@ -247,13 +255,13 @@ export const Subjects: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Save Subject
+                  Simpan Mapel
                 </button>
               </div>
             </form>

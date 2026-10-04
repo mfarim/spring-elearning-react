@@ -97,7 +97,7 @@ export const ExamMonitor: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Link
           to="/exams"
           className="inline-flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-800 transition"
@@ -135,17 +135,17 @@ export const ExamMonitor: React.FC = () => {
       )}
 
       {exam && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
                 {exam.subjectName}
               </span>
               <span className="text-xs text-slate-400">Class: {exam.classroomName}</span>
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mt-2">{exam.title}</h2>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span className="text-xs font-medium text-slate-400">Exam Pass Mark</span>
             <div className="text-xl font-bold text-emerald-600">{exam.passingScore}%</div>
           </div>
@@ -155,7 +155,7 @@ export const ExamMonitor: React.FC = () => {
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+          <div className="p-3 bg-teal-50 text-teal-600 rounded-xl">
             <Users className="w-6 h-6" />
           </div>
           <div>
@@ -189,7 +189,7 @@ export const ExamMonitor: React.FC = () => {
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <MonitorPlay className="w-5 h-5 text-indigo-600" />
+            <MonitorPlay className="w-5 h-5 text-emerald-600" />
             <span>Real-time Candidate Telemetry</span>
           </h3>
           <span className="text-xs text-slate-400">Total Enrolled: {attempts.length}</span>
@@ -204,83 +204,85 @@ export const ExamMonitor: React.FC = () => {
             <p className="text-xs mt-1 text-slate-400">Students entering the CBT room will automatically appear here.</p>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Session Status</th>
-                <th className="px-6 py-4">Questions Progress</th>
-                <th className="px-6 py-4">Violations</th>
-                <th className="px-6 py-4">Score</th>
-                <th className="px-6 py-4 text-right">Started At</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {attempts.map((att) => (
-                <tr key={att.attemptId} className="hover:bg-slate-50/80 transition">
-                  <td className="px-6 py-4">
-                    <div className="font-semibold text-slate-900">{att.studentName}</div>
-                    <div className="text-xs font-mono text-slate-400">NIS: {att.nis}</div>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                        att.status === 'in_progress'
-                          ? 'bg-amber-100 text-amber-700 animate-pulse'
-                          : att.status === 'completed'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-indigo-100 text-indigo-700'
-                      }`}
-                    >
-                      {att.status.replace('_', ' ')}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-24 bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                          style={{
-                            width: `${att.totalQuestions > 0 ? (att.answeredCount / att.totalQuestions) * 100 : 0}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-slate-600">
-                        {att.answeredCount}/{att.totalQuestions}
-                      </span>
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    {att.violations > 0 ? (
-                      <span className="inline-flex items-center space-x-1 bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-lg">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        <span>{att.violations} Warning{att.violations > 1 ? 's' : ''}</span>
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-400">0 Flags</span>
-                    )}
-                  </td>
-
-                  <td className="px-6 py-4">
-                    {att.score !== null && att.score !== undefined ? (
-                      <span className="font-bold text-slate-800 text-sm">
-                        {att.score} / 100
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-400 italic">In progress</span>
-                    )}
-                  </td>
-
-                  <td className="px-6 py-4 text-right text-xs text-slate-500">
-                    {new Date(att.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm min-w-[650px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Student</th>
+                  <th className="px-6 py-4">Session Status</th>
+                  <th className="px-6 py-4">Questions Progress</th>
+                  <th className="px-6 py-4">Violations</th>
+                  <th className="px-6 py-4">Score</th>
+                  <th className="px-6 py-4 text-right">Started At</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {attempts.map((att) => (
+                  <tr key={att.attemptId} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-slate-900">{att.studentName}</div>
+                      <div className="text-xs font-mono text-slate-400">NIS: {att.nis}</div>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                          att.status === 'in_progress'
+                            ? 'bg-amber-100 text-amber-700 animate-pulse'
+                            : att.status === 'completed'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {att.status.replace('_', ' ')}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-24 bg-slate-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${att.totalQuestions > 0 ? (att.answeredCount / att.totalQuestions) * 100 : 0}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-slate-600">
+                          {att.answeredCount}/{att.totalQuestions}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {att.violations > 0 ? (
+                        <span className="inline-flex items-center space-x-1 bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-lg">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          <span>{att.violations} Warning{att.violations > 1 ? 's' : ''}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">0 Flags</span>
+                      )}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {att.score !== null && att.score !== undefined ? (
+                        <span className="font-bold text-slate-800 text-sm">
+                          {att.score} / 100
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">In progress</span>
+                      )}
+                    </td>
+
+                    <td className="px-6 py-4 text-right text-xs text-slate-500">
+                      {new Date(att.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

@@ -142,7 +142,7 @@ export const Students: React.FC = () => {
           <select
             value={selectedClassroom}
             onChange={(e) => setSelectedClassroom(e.target.value)}
-            className="bg-white border border-slate-300 text-slate-700 text-xs font-medium rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-xs"
+            className="bg-white border border-slate-300 text-slate-700 text-xs font-medium rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-xs"
           >
             <option value="">All Classrooms</option>
             {classrooms.map((c) => (
@@ -174,76 +174,79 @@ export const Students: React.FC = () => {
 
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Student</span>
+            <span>Tambah Siswa</span>
           </button>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading students...</div>
+          <div className="p-8 text-center text-slate-500">Memuat data siswa...</div>
         ) : students.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">No students registered yet</p>
-            <p className="text-xs mt-1 text-slate-400">Use "Import Excel" to batch upload your student roster.</p>
+            <p className="text-base font-medium">Belum ada siswa terdaftar</p>
+            <p className="text-xs mt-1 text-slate-400">Gunakan "Import Excel" untuk unggah data siswa secara massal.</p>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Student Name</th>
-                <th className="px-6 py-4">NIS / NISN</th>
-                <th className="px-6 py-4">Gender</th>
-                <th className="px-6 py-4">Classroom</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {students.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-6 py-4 font-semibold text-slate-900">{s.name}</td>
-                  <td className="px-6 py-4 font-mono text-slate-600">
-                    <div>{s.nis}</div>
-                    {s.nisn && <div className="text-xs text-slate-400">{s.nisn}</div>}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        s.gender === 'M' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700'
-                      }`}
-                    >
-                      {s.gender === 'M' ? 'Laki-laki' : 'Perempuan'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">
-                    {s.classroomName || <span className="text-slate-400 italic">Unassigned</span>}
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{s.email}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => impersonate(s.userId)}
-                      title="Impersonate Student Session"
-                      className="inline-flex items-center space-x-1 text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-200 transition cursor-pointer"
-                    >
-                      <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
-                      <span>Login As</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm min-w-[700px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Nama Siswa</th>
+                  <th className="px-6 py-4">NIS / NISN</th>
+                  <th className="px-6 py-4">Jenis Kelamin</th>
+                  <th className="px-6 py-4">Kelas</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {students.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4 font-semibold text-slate-900">{s.name}</td>
+                    <td className="px-6 py-4 font-mono text-slate-600">
+                      <div>{s.nis}</div>
+                      {s.nisn && <div className="text-xs text-slate-400">{s.nisn}</div>}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          s.gender === 'M' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700'
+                        }`}
+                      >
+                        {s.gender === 'M' ? 'Laki-laki' : 'Perempuan'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {s.classroomName || <span className="text-slate-400 italic">Belum ada kelas</span>}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{s.email}</td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => impersonate(s.userId)}
+                        title="Masuk sebagai Siswa"
+                        className="inline-flex items-center space-x-1 text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-200 transition cursor-pointer"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
+                        <span>Login As</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                        title="Hapus Siswa"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -268,7 +271,7 @@ export const Students: React.FC = () => {
                   placeholder="e.g. Siti Nurhaliza"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -281,7 +284,7 @@ export const Students: React.FC = () => {
                     placeholder="102938"
                     value={form.nis}
                     onChange={(e) => setForm({ ...form, nis: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -291,7 +294,7 @@ export const Students: React.FC = () => {
                     placeholder="0056123491"
                     value={form.nisn}
                     onChange={(e) => setForm({ ...form, nisn: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -302,7 +305,7 @@ export const Students: React.FC = () => {
                   <select
                     value={form.gender}
                     onChange={(e) => setForm({ ...form, gender: e.target.value as 'M' | 'F' })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="M">Laki-laki (M)</option>
                     <option value="F">Perempuan (F)</option>
@@ -313,7 +316,7 @@ export const Students: React.FC = () => {
                   <select
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Classroom --</option>
                     {classrooms.map((c) => (
@@ -334,7 +337,7 @@ export const Students: React.FC = () => {
                     placeholder="student@school.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -344,7 +347,7 @@ export const Students: React.FC = () => {
                     placeholder="Defaults to Student@123"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -359,9 +362,9 @@ export const Students: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Save Student
+                  Simpan Siswa
                 </button>
               </div>
             </form>
@@ -386,14 +389,14 @@ export const Students: React.FC = () => {
             </p>
 
             <form onSubmit={handleImportExcel} className="space-y-4 text-sm">
-              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-indigo-500 transition">
+              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-500 transition">
                 <UploadCloud className="w-10 h-10 text-slate-400 mx-auto mb-2" />
                 <input
                   type="file"
                   accept=".xlsx, .xls"
                   required
                   onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
-                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                 />
               </div>
 
@@ -426,7 +429,7 @@ export const Students: React.FC = () => {
                 <button
                   type="submit"
                   disabled={importLoading || !excelFile}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {importLoading ? 'Processing Spreadsheet...' : 'Start Import'}
                 </button>
@@ -448,7 +451,7 @@ export const Students: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => window.print()}
-                  className="bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-indigo-500 transition cursor-pointer"
+                  className="bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-emerald-500 transition cursor-pointer"
                 >
                   Print View
                 </button>
@@ -470,7 +473,7 @@ export const Students: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
                       <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-indigo-700">
+                        <div className="text-xs font-bold uppercase tracking-wider text-emerald-800">
                           KARTU PESERTA UJIAN CBT
                         </div>
                         <div className="text-[10px] text-slate-500">Tahun Ajaran {c.academicYear}</div>

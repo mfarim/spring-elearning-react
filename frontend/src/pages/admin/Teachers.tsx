@@ -56,67 +56,70 @@ export const Teachers: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Teacher Management</h2>
-          <p className="text-xs text-slate-500 mt-1">Instructor accounts, NIP verification, and session impersonation</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Guru</h2>
+          <p className="text-xs text-slate-500 mt-1">Daftar akun pendidik, verifikasi NIP, dan akses Login As</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-2 text-sm cursor-pointer"
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Teacher</span>
+          <span>Tambah Guru</span>
         </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading teachers...</div>
+          <div className="p-8 text-center text-slate-500">Memuat data guru...</div>
         ) : teachers.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <UserCheck className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">No teachers found</p>
-            <p className="text-xs mt-1 text-slate-400">Add instructors to begin assigning courses.</p>
+            <p className="text-base font-medium">Belum ada guru terdaftar</p>
+            <p className="text-xs mt-1 text-slate-400">Klik "Tambah Guru" untuk mendaftarkan pendidik baru.</p>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Instructor Name</th>
-                <th className="px-6 py-4">NIP</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Phone</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {teachers.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50/80 transition">
-                  <td className="px-6 py-4 font-semibold text-slate-900">{t.name}</td>
-                  <td className="px-6 py-4 font-mono text-slate-600">{t.nip}</td>
-                  <td className="px-6 py-4 text-slate-600">{t.email}</td>
-                  <td className="px-6 py-4 text-slate-600">{t.phone || '-'}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => impersonate(t.userId)}
-                      title="Impersonate Teacher Session"
-                      className="inline-flex items-center space-x-1 text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-200 transition cursor-pointer"
-                    >
-                      <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
-                      <span>Login As</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(t.id)}
-                      className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm min-w-[650px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Nama Lengkap Guru</th>
+                  <th className="px-6 py-4">NIP</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">No. Telepon</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {teachers.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4 font-semibold text-slate-900">{t.name}</td>
+                    <td className="px-6 py-4 font-mono text-slate-600">{t.nip}</td>
+                    <td className="px-6 py-4 text-slate-600">{t.email}</td>
+                    <td className="px-6 py-4 text-slate-600">{t.phone || '-'}</td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => impersonate(t.userId)}
+                        title="Masuk sebagai Guru"
+                        className="inline-flex items-center space-x-1 text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-200 transition cursor-pointer"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
+                        <span>Login As</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                        title="Hapus Guru"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -140,7 +143,7 @@ export const Teachers: React.FC = () => {
                   placeholder="e.g. Budi Santoso, M.Pd."
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -153,7 +156,7 @@ export const Teachers: React.FC = () => {
                     placeholder="198501012010011001"
                     value={form.nip}
                     onChange={(e) => setForm({ ...form, nip: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -163,7 +166,7 @@ export const Teachers: React.FC = () => {
                     placeholder="08123456789"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -177,7 +180,7 @@ export const Teachers: React.FC = () => {
                     placeholder="teacher@school.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -187,7 +190,7 @@ export const Teachers: React.FC = () => {
                     placeholder="Defaults to Teacher@123"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -198,7 +201,7 @@ export const Teachers: React.FC = () => {
                   rows={2}
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="Street address..."
                 />
               </div>
@@ -213,9 +216,9 @@ export const Teachers: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Create Teacher
+                  Simpan Guru
                 </button>
               </div>
             </form>

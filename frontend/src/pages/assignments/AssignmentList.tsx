@@ -89,19 +89,19 @@ export const AssignmentList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Assignments & Homework</h2>
-          <p className="text-xs text-slate-500 mt-1">Submit coursework, receive grading feedback, and discuss topics</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Tugas & PR Siswa</h2>
+          <p className="text-xs text-slate-500 mt-1">Kumpulkan tugas, terima penilaian guru, dan ikuti forum diskusi</p>
         </div>
 
         {(isAdmin || isTeacher) && (
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-2 text-sm cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Assignment</span>
+            <span>Buat Tugas Baru</span>
           </button>
         )}
       </div>
@@ -119,24 +119,24 @@ export const AssignmentList: React.FC = () => {
           {assignments.map((a) => (
             <div
               key={a.id}
-              className="bg-white rounded-2xl border border-slate-200 hover:border-indigo-400 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-slate-200 hover:border-emerald-400 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                     {a.subjectName}
                   </span>
-                  <span className="text-xs font-medium text-slate-500">Max: {a.maxScore} pts</span>
+                  <span className="text-xs font-medium text-slate-500">Max: {a.maxScore} poin</span>
                 </div>
 
                 <h3 className="text-base font-bold text-slate-900 line-clamp-1">{a.title}</h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{a.description || 'No description provided.'}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{a.description || 'Tidak ada deskripsi.'}</p>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>Class: <strong>{a.classroomName}</strong></span>
+                  <span>Kelas: <strong>{a.classroomName}</strong></span>
                   <div className="flex items-center space-x-1 text-amber-700 font-semibold">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>Due: {new Date(a.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>Batas: {new Date(a.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
               </div>
@@ -144,10 +144,10 @@ export const AssignmentList: React.FC = () => {
               <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <Link
                   to={`/assignments/${a.id}`}
-                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition"
+                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>View Details & Submissions</span>
+                  <span>Detail & Pengumpulan</span>
                 </Link>
 
                 <div className="flex items-center space-x-2">
@@ -194,7 +194,7 @@ export const AssignmentList: React.FC = () => {
                   placeholder="e.g. Tugas Mandiri 1: Pemrograman Berorientasi Objek"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -205,7 +205,7 @@ export const AssignmentList: React.FC = () => {
                     required
                     value={form.subjectId}
                     onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Subject --</option>
                     {subjects.map((s) => (
@@ -221,7 +221,7 @@ export const AssignmentList: React.FC = () => {
                     required
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Classroom --</option>
                     {classrooms.map((c) => (
@@ -241,7 +241,7 @@ export const AssignmentList: React.FC = () => {
                     required
                     value={form.dueDate}
                     onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -253,7 +253,7 @@ export const AssignmentList: React.FC = () => {
                     max={100}
                     value={form.maxScore}
                     onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -264,7 +264,7 @@ export const AssignmentList: React.FC = () => {
                   rows={3}
                   value={form.instructions}
                   onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="Task instructions and guidelines..."
                 />
               </div>
@@ -279,9 +279,9 @@ export const AssignmentList: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Publish Assignment
+                  Publikasikan Tugas
                 </button>
               </div>
             </form>

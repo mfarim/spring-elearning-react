@@ -58,7 +58,7 @@ export const MaterialDetail: React.FC = () => {
     return (
       <div className="p-12 text-center text-slate-500">
         <p>Material not found.</p>
-        <Link to="/materials" className="text-indigo-600 font-semibold mt-2 inline-block">
+        <Link to="/materials" className="text-emerald-600 hover:text-emerald-700 font-semibold mt-2 inline-block">
           Back to Materials
         </Link>
       </div>
@@ -75,10 +75,10 @@ export const MaterialDetail: React.FC = () => {
         <span>Back to materials</span>
       </Link>
 
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-6">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-md">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-md border border-emerald-200">
               {material.subjectName}
             </span>
             <div className="flex items-center space-x-2 text-xs text-slate-400">
@@ -93,15 +93,15 @@ export const MaterialDetail: React.FC = () => {
           <div className="flex items-center flex-wrap gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
             <div className="flex items-center space-x-1">
               <User className="w-4 h-4 text-slate-400" />
-              <span>Instructor: <strong>{material.teacherName}</strong></span>
+              <span>Guru Pengampu: <strong>{material.teacherName}</strong></span>
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4 text-slate-400" />
-              <span>Classroom: <strong>{material.classroomName || 'All Classrooms'}</strong></span>
+              <span>Kelas: <strong>{material.classroomName || 'Semua Kelas'}</strong></span>
             </div>
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4 text-slate-400" />
-              <span>Published: {new Date(material.createdAt).toLocaleDateString()}</span>
+              <span>Dipublikasikan: {new Date(material.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
         </div>
@@ -115,24 +115,24 @@ export const MaterialDetail: React.FC = () => {
 
         {/* Attachment download */}
         {material.fileUrl && (
-          <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-indigo-600 text-white rounded-xl">
+              <div className="p-2.5 bg-emerald-600 text-white rounded-xl shrink-0">
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-800">Learning Attachment ({material.type})</p>
-                <p className="text-xs text-slate-500">Download or open course syllabus file</p>
+                <p className="text-sm font-bold text-slate-800">Berkas Lampiran ({material.type})</p>
+                <p className="text-xs text-slate-500">Unduh atau buka modul silabus pembelajaran</p>
               </div>
             </div>
             <a
               href={material.fileUrl}
               target="_blank"
               rel="noreferrer"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition self-start sm:self-auto"
             >
               <Download className="w-4 h-4" />
-              <span>Open Document</span>
+              <span>Buka Dokumen</span>
             </a>
           </div>
         )}

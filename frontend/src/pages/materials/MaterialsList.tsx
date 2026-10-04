@@ -113,19 +113,19 @@ export const MaterialsList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Learning Materials</h2>
-          <p className="text-xs text-slate-500 mt-1">Digital syllabus modules, reading guides, and lecture files</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Materi Pembelajaran</h2>
+          <p className="text-xs text-slate-500 mt-1">Modul silabus digital, panduan bacaan, dan berkas materi kuliah</p>
         </div>
 
         {(isAdmin || isTeacher) && (
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-2 text-sm cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Upload Material</span>
+            <span>Unggah Materi</span>
           </button>
         )}
       </div>
@@ -143,35 +143,35 @@ export const MaterialsList: React.FC = () => {
           {materials.map((m) => (
             <div
               key={m.id}
-              className="bg-white rounded-2xl border border-slate-200 hover:border-indigo-400 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-slate-200 hover:border-emerald-400 p-6 shadow-xs hover:shadow-md transition flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                     {m.subjectName}
                   </span>
                   <div className="flex items-center space-x-2 text-xs text-slate-400">
                     <Eye className="w-3.5 h-3.5" />
-                    <span>{m.totalViews} views</span>
+                    <span>{m.totalViews} dilihat</span>
                   </div>
                 </div>
 
                 <h3 className="text-base font-bold text-slate-900 line-clamp-1">{m.title}</h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{m.description || 'No description provided.'}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{m.description || 'Tidak ada deskripsi.'}</p>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>Class: <strong>{m.classroomName || 'All'}</strong></span>
-                  <span>By: <strong>{m.teacherName}</strong></span>
+                  <span>Kelas: <strong>{m.classroomName || 'Semua'}</strong></span>
+                  <span>Oleh: <strong>{m.teacherName}</strong></span>
                 </div>
               </div>
 
               <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <Link
                   to={`/materials/${m.id}`}
-                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition"
+                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>Open Reader</span>
+                  <span>Buka Materi</span>
                 </Link>
 
                 <div className="flex items-center space-x-2">
@@ -217,7 +217,7 @@ export const MaterialsList: React.FC = () => {
                   placeholder="e.g. Bab 1: Persamaan Linier dan Kuadrat"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -228,7 +228,7 @@ export const MaterialsList: React.FC = () => {
                     required
                     value={form.subjectId}
                     onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">-- Choose Subject --</option>
                     {subjects.map((s) => (
@@ -243,7 +243,7 @@ export const MaterialsList: React.FC = () => {
                   <select
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">All Classrooms</option>
                     {classrooms.map((c) => (
@@ -261,7 +261,7 @@ export const MaterialsList: React.FC = () => {
                   <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="PDF">PDF Document</option>
                     <option value="ARTICLE">Article / Text</option>
@@ -273,7 +273,7 @@ export const MaterialsList: React.FC = () => {
                   <input
                     type="file"
                     onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    className="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700"
+                    className="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                   />
                 </div>
               </div>
@@ -284,7 +284,7 @@ export const MaterialsList: React.FC = () => {
                   rows={2}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="Short description of the topic..."
                 />
               </div>
@@ -295,7 +295,7 @@ export const MaterialsList: React.FC = () => {
                   rows={4}
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="Markdown or lecture text..."
                 />
               </div>
@@ -310,9 +310,9 @@ export const MaterialsList: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Publish Material
+                  Publikasikan Materi
                 </button>
               </div>
             </form>

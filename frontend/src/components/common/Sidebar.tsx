@@ -12,90 +12,146 @@ import {
   MessageSquareShare,
   Bell,
   Award,
+  X,
+  BookOpen,
 } from 'lucide-react';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  closeMobileMenu?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
   const { user } = useAuthStore();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-150 ${
+    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 ${
       isActive
-        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        ? 'bg-white text-emerald-700 shadow-sm font-semibold'
+        : 'text-emerald-100 hover:bg-white/10 font-medium'
     }`;
 
+  const getRoleLabel = () => {
+    if (isAdmin) return 'Administrator';
+    if (isTeacher) return 'Guru Pengajar';
+    return 'Siswa';
+  };
+
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 min-h-[calc(100vh-4rem)] p-4 flex flex-col justify-between">
-      <div className="space-y-6">
+    <aside className="flex grow flex-col h-full overflow-y-auto bg-gradient-to-b from-[#059669] to-[#065f46] text-white select-none">
+      {/* Brand Header */}
+      <div className="flex h-16 items-center justify-between px-5 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/20 text-white">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <span className="text-base font-bold text-white tracking-tight">
+            EduPulse LMS
+          </span>
+        </div>
+        {closeMobileMenu && (
+          <button
+            type="button"
+            onClick={closeMobileMenu}
+            className="md:hidden p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-white/10 transition"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Navigation Menu */}
+      <nav className="flex-1 px-3 py-4 space-y-6">
+        {/* Main Menu */}
         <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 mb-2">Main Menu</div>
-          <nav className="space-y-1">
-            <NavLink to="/dashboard" className={navClass}>
+          <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300/60">
+            Menu Utama
+          </p>
+          <div className="space-y-0.5">
+            <NavLink to="/dashboard" onClick={closeMobileMenu} className={navClass}>
               <LayoutDashboard className="w-5 h-5" />
               <span>Dashboard</span>
             </NavLink>
-          </nav>
+          </div>
         </div>
 
+        {/* Admin Management */}
         {isAdmin && (
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 mb-2">Academic & Users</div>
-            <nav className="space-y-1">
-              <NavLink to="/classrooms" className={navClass}>
-                <GraduationCap className="w-5 h-5" />
-                <span>Classrooms</span>
-              </NavLink>
-              <NavLink to="/subjects" className={navClass}>
-                <BookMarked className="w-5 h-5" />
-                <span>Subjects</span>
-              </NavLink>
-              <NavLink to="/teachers" className={navClass}>
+            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300/60">
+              Manajemen & User
+            </p>
+            <div className="space-y-0.5">
+              <NavLink to="/teachers" onClick={closeMobileMenu} className={navClass}>
                 <UserCheck className="w-5 h-5" />
-                <span>Teachers</span>
+                <span>Guru</span>
               </NavLink>
-              <NavLink to="/students" className={navClass}>
+              <NavLink to="/students" onClick={closeMobileMenu} className={navClass}>
                 <Users className="w-5 h-5" />
-                <span>Students</span>
+                <span>Siswa</span>
               </NavLink>
-              <NavLink to="/announcements" className={navClass}>
+              <NavLink to="/classrooms" onClick={closeMobileMenu} className={navClass}>
+                <GraduationCap className="w-5 h-5" />
+                <span>Kelas</span>
+              </NavLink>
+              <NavLink to="/subjects" onClick={closeMobileMenu} className={navClass}>
+                <BookMarked className="w-5 h-5" />
+                <span>Mata Pelajaran</span>
+              </NavLink>
+              <NavLink to="/announcements" onClick={closeMobileMenu} className={navClass}>
                 <Bell className="w-5 h-5" />
-                <span>Announcements</span>
+                <span>Pengumuman</span>
               </NavLink>
-            </nav>
+            </div>
           </div>
         )}
 
+        {/* Academic & Learning CBT */}
         <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 mb-2">Learning & CBT</div>
-          <nav className="space-y-1">
-            <NavLink to="/exams" className={navClass}>
+          <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300/60">
+            Akademik & CBT
+          </p>
+          <div className="space-y-0.5">
+            <NavLink to="/exams" onClick={closeMobileMenu} className={navClass}>
               <FileCheck2 className="w-5 h-5" />
-              <span>{isTeacher || isAdmin ? 'CBT Exam & Questions' : 'My Exams'}</span>
+              <span>{isTeacher || isAdmin ? 'Ujian & CBT' : 'Ujian Saya'}</span>
             </NavLink>
-            <NavLink to="/materials" className={navClass}>
+            <NavLink to="/materials" onClick={closeMobileMenu} className={navClass}>
               <FileText className="w-5 h-5" />
-              <span>Learning Materials</span>
+              <span>Materi Belajar</span>
             </NavLink>
-            <NavLink to="/assignments" className={navClass}>
+            <NavLink to="/assignments" onClick={closeMobileMenu} className={navClass}>
               <MessageSquareShare className="w-5 h-5" />
-              <span>Assignments</span>
+              <span>Tugas & Forum</span>
             </NavLink>
             {!isAdmin && !isTeacher && (
-              <NavLink to="/grades" className={navClass}>
+              <NavLink to="/grades" onClick={closeMobileMenu} className={navClass}>
                 <Award className="w-5 h-5" />
-                <span>Grades & Report</span>
+                <span>Nilai & Rapor</span>
               </NavLink>
             )}
-          </nav>
+          </div>
         </div>
-      </div>
+      </nav>
 
-      <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-500">
-        <div className="font-semibold text-slate-700">EduPulse v1.0.0</div>
-        <p className="mt-0.5">Spring Boot 3.4 + React 19 Monorepo</p>
+      {/* User Info footer */}
+      <div className="p-3 border-t border-white/10 shrink-0">
+        <div className="flex items-center gap-3 rounded-lg px-2 py-1.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-white text-xs font-bold shrink-0">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">{user?.name}</p>
+            <p className="text-xs text-emerald-200 truncate">{getRoleLabel()}</p>
+          </div>
+        </div>
+        <p className="text-[10px] text-emerald-300/40 text-center mt-2">
+          Spring Boot + React • v1.0.0
+        </p>
       </div>
     </aside>
   );
 };
+
