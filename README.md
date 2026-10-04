@@ -1,10 +1,10 @@
-# EduPulse: Enterprise CBT & LMS Platform
+# Spring E-Learning: Enterprise CBT & LMS Platform
 ### Built with Java 21, Spring Boot 3.4+, React 19, and Tailwind CSS v4
 
 [![Backend CI](https://github.com/mfarim/spring-elearning-react/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/mfarim/spring-elearning-react/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/mfarim/spring-elearning-react/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/mfarim/spring-elearning-react/actions/workflows/frontend-ci.yml)
 
-EduPulse is an enterprise-grade Learning Management System (LMS) and Computer-Based Testing (CBT) engine designed from the ground up to replace legacy PHP/Laravel monolithic applications with a cloud-native, high-concurrency micro-architecture.
+Spring E-Learning is an enterprise-grade Learning Management System (LMS) and Computer-Based Testing (CBT) engine designed from the ground up to replace legacy PHP/Laravel monolithic applications with a cloud-native, high-concurrency micro-architecture.
 
 ---
 

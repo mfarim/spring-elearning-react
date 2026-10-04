@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
             <BookOpen className="w-5 h-5" />
           </div>
           <span className="text-base font-bold text-white tracking-tight">
-            EduPulse LMS
+            Spring E-Learning
           </span>
         </div>
         {closeMobileMenu && (

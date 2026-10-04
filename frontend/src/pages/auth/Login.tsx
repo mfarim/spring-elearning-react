@@ -59,7 +59,7 @@ export const Login: React.FC = () => {
             </div>
             <div>
               <span className="text-xl font-bold text-white tracking-tight">
-                EduPulse LMS
+                Spring E-Learning
               </span>
               <p className="text-[11px] text-emerald-200">Spring Boot & React CBT</p>
             </div>
@@ -123,7 +123,7 @@ export const Login: React.FC = () => {
 
           {/* Footer */}
           <p className="text-xs text-emerald-300/60">
-            © 2026 EduPulse E-Learning. All rights reserved.
+            © 2026 Spring E-Learning. All rights reserved.
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export const Login: React.FC = () => {
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-200 mb-3">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">EduPulse LMS</h2>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Spring E-Learning</h2>
             <p className="text-xs text-gray-500 mt-1">Platform E-Learning & CBT Sekolah</p>
           </div>
 

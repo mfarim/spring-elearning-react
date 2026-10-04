@@ -73,7 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
             </div>
             <div>
               <h1 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-none">
-                EduPulse LMS
+                Spring E-Learning
               </h1>
               <p className="text-[11px] text-gray-500 mt-0.5 hidden sm:block">
                 Learning Management & CBT System
