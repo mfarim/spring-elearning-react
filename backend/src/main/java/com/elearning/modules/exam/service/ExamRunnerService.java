@@ -96,11 +96,13 @@ public class ExamRunnerService {
                 .filter(a -> a.getAnswerText() != null)
                 .collect(Collectors.toMap(a -> a.getQuestion().getId(), ExamAnswer::getAnswerText, (a1, a2) -> a1));
 
+        final Long currentAttemptId = attempt.getId();
+
         List<QuestionResponse> questionResponses = questions.stream().map(q -> {
             List<String> options = q.getOptions();
             if (options != null && exam.isShuffleOptions()) {
                 options = new ArrayList<>(options);
-                Collections.shuffle(options, new Random(attempt.getId() * 17 + q.getId()));
+                Collections.shuffle(options, new Random(currentAttemptId * 17 + q.getId()));
             }
 
             return QuestionResponse.builder()

@@ -4,5 +4,6 @@ public enum AttemptStatus {
     in_progress,
     needs_grading,
     completed,
-    force_finished
+    force_finished,
+    submitted
 }
