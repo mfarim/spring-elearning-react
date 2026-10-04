@@ -35,7 +35,7 @@ public class Student extends BaseEntity {
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 1, nullable = false)
+    @Column(length = 10, nullable = false)
     private Gender gender;
 
     @Column(columnDefinition = "TEXT")
