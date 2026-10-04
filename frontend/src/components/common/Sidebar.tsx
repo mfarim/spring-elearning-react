@@ -13,7 +13,6 @@ import {
   Bell,
   Award,
   X,
-  BookOpen,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -43,9 +42,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-5 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/20 text-white">
-            <BookOpen className="w-5 h-5" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Spring E-Learning Logo"
+            className="w-9 h-9 rounded-xl object-cover shadow-xs border border-white/20"
+          />
           <span className="text-base font-bold text-white tracking-tight">
             Spring E-Learning
           </span>

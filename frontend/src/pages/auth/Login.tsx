@@ -10,7 +10,6 @@ import {
   GraduationCap,
   Eye,
   EyeOff,
-  BookOpen,
   CheckCircle2,
   MonitorCheck,
   Smartphone,
@@ -54,9 +53,11 @@ export const Login: React.FC = () => {
         <div className="relative z-10 flex flex-col justify-between p-10 w-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm text-white shadow-xs">
-              <BookOpen className="w-6 h-6" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Spring E-Learning Logo"
+              className="w-11 h-11 rounded-xl object-cover shadow-sm border border-white/20"
+            />
             <div>
               <span className="text-xl font-bold text-white tracking-tight">
                 Spring E-Learning
@@ -137,9 +138,11 @@ export const Login: React.FC = () => {
         <div className="w-full max-w-md">
           {/* Mobile brand header (shown on small screens) */}
           <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-200 mb-3">
-              <BookOpen className="w-6 h-6" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Spring E-Learning Logo"
+              className="w-14 h-14 rounded-2xl mx-auto mb-3 shadow-md shadow-emerald-600/20 object-cover"
+            />
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Spring E-Learning</h2>
             <p className="text-xs text-gray-500 mt-1">Platform E-Learning & CBT Sekolah</p>
           </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { LogOut, UserCheck, ShieldAlert, BookOpen, Menu, X } from 'lucide-react';
+import { LogOut, UserCheck, ShieldAlert, Menu, X } from 'lucide-react';
 
 interface NavbarProps {
   onToggleMobileMenu?: () => void;
@@ -68,9 +68,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
           <div className="h-5 w-px bg-gray-200 md:hidden" />
 
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-xs">
-              <BookOpen className="w-5 h-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Spring E-Learning Logo"
+              className="w-9 h-9 rounded-xl object-cover shadow-xs border border-emerald-100"
+            />
             <div>
               <h1 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-none">
                 Spring E-Learning
