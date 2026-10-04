@@ -237,7 +237,7 @@ export const Login: React.FC = () => {
             <div className="grid grid-cols-3 gap-2 mb-3">
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin@elearning.com', 'Admin@123')}
+                onClick={() => handleQuickLogin('admin@sekolah.id', 'password')}
                 className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 py-2.5 px-2 text-xs font-medium text-gray-700 hover:text-emerald-700 transition cursor-pointer"
               >
                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
@@ -245,7 +245,7 @@ export const Login: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('teacher@elearning.com', 'Teacher@123')}
+                onClick={() => handleQuickLogin('budi@sekolah.id', 'password')}
                 className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 py-2.5 px-2 text-xs font-medium text-gray-700 hover:text-emerald-700 transition cursor-pointer"
               >
                 <UserCheck className="w-5 h-5 text-emerald-600" />
@@ -253,7 +253,7 @@ export const Login: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('student@elearning.com', 'Student@123')}
+                onClick={() => handleQuickLogin('andi.pratama1@siswa.id', 'password')}
                 className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 py-2.5 px-2 text-xs font-medium text-gray-700 hover:text-emerald-700 transition cursor-pointer"
               >
                 <GraduationCap className="w-5 h-5 text-emerald-600" />
