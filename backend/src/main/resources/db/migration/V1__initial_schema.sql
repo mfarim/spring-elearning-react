@@ -72,7 +72,7 @@ CREATE TABLE students (
     nis VARCHAR(50) NOT NULL UNIQUE,
     nisn VARCHAR(50),
     birth_date DATE,
-    gender VARCHAR(1) NOT NULL CHECK (gender IN ('L', 'P')),
+    gender VARCHAR(1) NOT NULL CHECK (gender IN ('L', 'P', 'M', 'F')),
     address TEXT,
     photo VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
