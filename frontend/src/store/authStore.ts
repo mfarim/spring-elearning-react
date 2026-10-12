@@ -30,6 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ user, token, isAuthenticated: true, isLoading: false });
       } catch {
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         set({ user: null, token: null, isAuthenticated: false, isLoading: false });
       }
@@ -54,6 +55,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       };
 
       localStorage.setItem('token', data.accessToken);
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(user));
 
       set({ user, token: data.accessToken, isAuthenticated: true, isLoading: false });
@@ -65,6 +69,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     set({ user: null, token: null, isAuthenticated: false });
     window.location.href = '/login';
@@ -84,6 +89,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     };
 
     localStorage.setItem('token', data.accessToken);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(user));
 
     set({ user, token: data.accessToken });
@@ -104,6 +112,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     };
 
     localStorage.setItem('token', data.accessToken);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(user));
 
     set({ user, token: data.accessToken });
