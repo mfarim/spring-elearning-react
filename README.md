@@ -179,12 +179,18 @@ cd spring-elearning-react
 
 # Launch full stack (PostgreSQL 16, Redis 7, Spring Boot backend, and React frontend)
 docker compose up -d
+
+# (Optional) Seed realistic demo data (teachers, classrooms, subjects, exams)
+docker exec -i elearning-postgres psql -U postgres -d elearning < backend/src/main/resources/db/migration/seed_demo_data.sql
 ```
 
 Access the services:
 - **Frontend Web Portal**: [http://localhost:3000](http://localhost:3000)
 - **Spring Boot Backend API**: [http://localhost:8080](http://localhost:8080)
+- **Actuator Health Probe**: [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
 - **Interactive Swagger UI Documentation**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+
+For contribution guidelines and coding standards, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

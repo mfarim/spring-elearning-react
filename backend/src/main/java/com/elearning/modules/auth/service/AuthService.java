@@ -15,6 +15,7 @@ import com.elearning.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -59,6 +60,42 @@ public class AuthService {
                 .name(principal.getName())
                 .email(principal.getEmail())
                 .roles(roles)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        String token = request.getRefreshToken();
+        if (token == null || !jwtProvider.validateToken(token)) {
+            throw new BadCredentialsException("Invalid or expired refresh token");
+        }
+
+        Long userId = jwtProvider.getUserIdFromToken(token);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadCredentialsException("User associated with refresh token not found"));
+
+        if (!user.isActive()) {
+            throw new AccessDeniedException("User account is inactive");
+        }
+
+        Long impersonatorAdminId = jwtProvider.getImpersonatorAdminIdFromToken(token);
+        UserPrincipal principal = UserPrincipal.create(user, impersonatorAdminId);
+
+        String newAccessToken = jwtProvider.generateAccessToken(principal);
+        String newRefreshToken = jwtProvider.generateRefreshToken(principal);
+
+        List<String> roles = principal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        return AuthResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .roles(roles)
+                .impersonatorAdminId(impersonatorAdminId)
                 .build();
     }
 

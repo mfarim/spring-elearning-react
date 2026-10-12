@@ -29,6 +29,13 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(response, "Login successful"));
     }
 
+    @PostMapping("/auth/refresh")
+    @Operation(summary = "Refresh JWT Token", description = "Obtain a fresh access token using a valid refresh token")
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse response = authService.refreshToken(request);
+        return ResponseEntity.ok(ApiResponse.ok(response, "Token refreshed successfully"));
+    }
+
     @PostMapping("/auth/register")
     @Operation(summary = "Student Registration", description = "Register a new student account")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
