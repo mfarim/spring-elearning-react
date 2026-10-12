@@ -178,12 +178,18 @@ cd spring-elearning-react
 
 # Jalankan seluruh stack (PostgreSQL 16, Redis 7, Spring Boot backend, dan React frontend)
 docker compose up -d
+
+# (Opsional) Muat data demo siap pakai (guru, kelas, mata pelajaran, ujian CBT)
+docker exec -i elearning-postgres psql -U postgres -d elearning < backend/src/main/resources/db/migration/seed_demo_data.sql
 ```
 
 Akses layanan:
 - **Portal Web Frontend**: [http://localhost:3000](http://localhost:3000)
 - **Backend API Spring Boot**: [http://localhost:8080](http://localhost:8080)
+- **Actuator Health Probe**: [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
 - **Dokumentasi Swagger UI Interaktif**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+
+Panduan kontribusi dan standar kode open source dapat dilihat di [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
