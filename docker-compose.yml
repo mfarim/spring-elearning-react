@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: elearning-redis
     restart: always
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -40,8 +40,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
 
@@ -57,11 +57,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==
-      APP_JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==
+      JWT_SECRET: ${JWT_SECRET:-dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==}
+      APP_JWT_SECRET: ${JWT_SECRET:-dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==}
       STORAGE_UPLOAD_DIR: /app/storage/uploads
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - backend_storage:/app/storage/uploads
     healthcheck:
@@ -87,7 +87,7 @@ services:
     container_name: elearning-frontend
     restart: always
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     depends_on:
       backend:
         condition: service_healthy
