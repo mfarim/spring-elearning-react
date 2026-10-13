@@ -27,6 +27,21 @@ public class FileStorageService {
         }
     }
 
+    private static final java.util.Set<String> ALLOWED_EXTENSIONS = java.util.Set.of(
+            ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".txt", ".csv",
+            ".jpg", ".jpeg", ".png", ".webp", ".gif",
+            ".zip", ".rar", ".7z",
+            ".mp3", ".wav", ".ogg",
+            ".mp4", ".webm"
+    );
+
+    private static final java.util.Set<String> BLOCKED_EXTENSIONS = java.util.Set.of(
+            ".html", ".htm", ".xhtml", ".svg", ".xml",
+            ".jsp", ".jspx", ".php", ".phtml",
+            ".exe", ".bat", ".cmd", ".sh", ".bash", ".ps1", ".vbs",
+            ".js", ".mjs", ".jar", ".war", ".py", ".cgi", ".dll", ".so"
+    );
+
     public String storeFile(MultipartFile file, String subDirectory) {
         String originalFileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         if (originalFileName.contains("..")) {
@@ -36,7 +51,11 @@ public class FileStorageService {
         String extension = "";
         int i = originalFileName.lastIndexOf('.');
         if (i >= 0) {
-            extension = originalFileName.substring(i);
+            extension = originalFileName.substring(i).toLowerCase();
+        }
+
+        if (extension.isEmpty() || !ALLOWED_EXTENSIONS.contains(extension) || BLOCKED_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("File type not allowed (" + extension + "). Only safe documents and media formats are permitted.");
         }
 
         String fileName = UUID.randomUUID() + extension;
