@@ -45,6 +45,7 @@ export const ExamMonitor: React.FC = () => {
     loadData();
 
     // Setup STOMP WebSocket client
+    const socketFactory = () => new SockJS('/ws');
     const token = localStorage.getItem('token');
     const client = new Client({
       webSocketFactory: socketFactory,
