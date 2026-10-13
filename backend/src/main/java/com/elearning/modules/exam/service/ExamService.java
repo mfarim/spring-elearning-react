@@ -307,15 +307,33 @@ public class ExamService {
 
         validateTeacherOwnership(exam, principal);
 
-        int count = 0;
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be empty");
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
+            throw new IllegalArgumentException("Invalid file format. Only Excel files (.xlsx, .xls) are allowed.");
+        }
+
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("Excel file size exceeds 10MB limit.");
+        }
+
+        List<Question> questionsToSave = new ArrayList<>();
         try (InputStream is = file.getInputStream();
              Workbook workbook = WorkbookFactory.create(is)) {
 
             Sheet sheet = workbook.getSheetAt(0);
+            int totalRows = sheet.getLastRowNum();
+            if (totalRows > 1000) {
+                throw new IllegalArgumentException("Excel file contains too many rows (" + totalRows + "). Maximum limit is 1,000 questions per import.");
+            }
+
             DataFormatter formatter = new DataFormatter();
 
             // Columns: [Question Text, Question Type, Opt A, Opt B, Opt C, Opt D, Opt E, Correct Answer, Points, Explanation]
-            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+            for (int r = 1; r <= totalRows; r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) continue;
 
@@ -357,20 +375,24 @@ public class ExamService {
                         .difficulty(Difficulty.medium)
                         .build();
 
-                questionRepository.save(question);
-                count++;
+                questionsToSave.add(question);
             }
 
-            exam.setTotalQuestions(exam.getTotalQuestions() + count);
-            examRepository.save(exam);
+            if (!questionsToSave.isEmpty()) {
+                questionRepository.saveAll(questionsToSave);
+                exam.setTotalQuestions(exam.getTotalQuestions() + questionsToSave.size());
+                examRepository.save(exam);
+            }
 
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to parse questions Excel", e);
             throw new RuntimeException("Failed to read Excel questions: " + e.getMessage());
         }
 
         Map<String, Object> result = new HashMap<>();
-        result.put("importedCount", count);
+        result.put("importedCount", questionsToSave.size());
         return result;
     }
 
