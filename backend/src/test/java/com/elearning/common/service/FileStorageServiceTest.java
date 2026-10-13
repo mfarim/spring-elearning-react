@@ -82,4 +82,37 @@ class FileStorageServiceTest {
                 fileStorageService.deleteFile("../../secret.txt")
         );
     }
+
+    @Test
+    void testStoreFile_DangerousExtensions_ThrowsIllegalArgumentException() {
+        MockMultipartFile htmlFile = new MockMultipartFile(
+                "file",
+                "malicious.html",
+                "text/html",
+                "<script>alert(1)</script>".getBytes()
+        );
+        assertThrows(IllegalArgumentException.class, () ->
+                fileStorageService.storeFile(htmlFile, "materials")
+        );
+
+        MockMultipartFile svgFile = new MockMultipartFile(
+                "file",
+                "vector.svg",
+                "image/svg+xml",
+                "<svg onload=alert(1)>".getBytes()
+        );
+        assertThrows(IllegalArgumentException.class, () ->
+                fileStorageService.storeFile(svgFile, "materials")
+        );
+
+        MockMultipartFile exeFile = new MockMultipartFile(
+                "file",
+                "payload.exe",
+                "application/octet-stream",
+                "binary".getBytes()
+        );
+        assertThrows(IllegalArgumentException.class, () ->
+                fileStorageService.storeFile(exeFile, "materials")
+        );
+    }
 }

@@ -159,6 +159,19 @@ public class StudentService {
         Role studentRole = roleRepository.findByName(RoleType.ROLE_STUDENT)
                 .orElseThrow(() -> new IllegalStateException("ROLE_STUDENT not found"));
 
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be empty");
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
+            throw new IllegalArgumentException("Invalid file format. Only Excel files (.xlsx, .xls) are allowed.");
+        }
+
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("Excel file size exceeds 10MB limit.");
+        }
+
         int successCount = 0;
         int errorCount = 0;
         List<String> errors = new ArrayList<>();
@@ -167,10 +180,15 @@ public class StudentService {
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(0);
+            int totalRows = sheet.getLastRowNum();
+            if (totalRows > 1000) {
+                throw new IllegalArgumentException("Excel file contains too many rows (" + totalRows + "). Maximum limit is 1,000 students per batch import.");
+            }
+
             DataFormatter formatter = new DataFormatter();
 
             // Row 0 is header: [Name, Email, NIS, NISN, Gender (M/F), Phone, Address]
-            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+            for (int r = 1; r <= totalRows; r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) continue;
 
@@ -230,6 +248,8 @@ public class StudentService {
                     errorCount++;
                 }
             }
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to parse excel file", e);
             throw new RuntimeException("Failed to read Excel file: " + e.getMessage());

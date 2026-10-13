@@ -26,7 +26,13 @@ public class JwtProvider {
             @Value("${app.jwt.access-token-expiration-ms:900000}") long accessTokenExpirationMs,
             @Value("${app.jwt.refresh-token-expiration-ms:604800000}") long refreshTokenExpirationMs
     ) {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalStateException("CRITICAL: app.jwt.secret is not configured! Please provide JWT_SECRET environment variable.");
+        }
+        byte[] keyBytes = Decoders.BASE64.decode(secret.trim());
+        if (keyBytes.length < 32) {
+            throw new IllegalArgumentException("CRITICAL: JWT secret key must be at least 256 bits (32 bytes) long for HMAC-SHA256!");
+        }
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpirationMs = accessTokenExpirationMs;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;

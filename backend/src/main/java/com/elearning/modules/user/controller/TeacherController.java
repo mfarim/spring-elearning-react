@@ -24,12 +24,14 @@ public class TeacherController {
     private final TeacherService teacherService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Get all teachers")
     public ResponseEntity<ApiResponse<List<TeacherResponse>>> getAllTeachers() {
         return ResponseEntity.ok(ApiResponse.success(teacherService.getAllTeachers(), "Teachers fetched successfully"));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Get teacher by ID")
     public ResponseEntity<ApiResponse<TeacherResponse>> getTeacherById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(teacherService.getTeacherById(id), "Teacher details"));

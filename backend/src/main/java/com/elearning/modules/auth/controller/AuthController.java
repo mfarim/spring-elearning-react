@@ -21,11 +21,19 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.elearning.security.LoginRateLimiterService rateLimiterService;
 
     @PostMapping("/auth/login")
     @Operation(summary = "User Login", description = "Authenticate with email and password to receive JWT tokens")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            jakarta.servlet.http.HttpServletRequest servletRequest
+    ) {
+        String clientIp = com.elearning.security.LoginRateLimiterService.getClientIp(servletRequest);
+        rateLimiterService.checkLoginAllowed(clientIp, request.getEmail());
+
         AuthResponse response = authService.login(request);
+        rateLimiterService.clearRateLimit(clientIp, request.getEmail());
         return ResponseEntity.ok(ApiResponse.ok(response, "Login successful"));
     }
 

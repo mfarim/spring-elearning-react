@@ -236,7 +236,12 @@ public class AssignmentService {
 
     // Discussions
     @Transactional(readOnly = true)
-    public List<DiscussionResponse> getDiscussions(Long assignmentId) {
+    public List<DiscussionResponse> getDiscussions(Long assignmentId, UserPrincipal principal) {
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with id: " + assignmentId));
+
+        validateAssignmentAccess(assignment, principal);
+
         List<AssignmentDiscussion> topLevel = discussionRepository.findByAssignmentIdAndParentIsNullOrderByCreatedAtAsc(assignmentId);
         return topLevel.stream().map(this::mapToDiscussionResponse).collect(Collectors.toList());
     }
@@ -244,7 +249,9 @@ public class AssignmentService {
     @Transactional
     public DiscussionResponse postDiscussion(Long assignmentId, DiscussionDto dto, UserPrincipal principal) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Assignment not found with id: " + assignmentId));
+
+        validateAssignmentAccess(assignment, principal);
 
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -253,6 +260,9 @@ public class AssignmentService {
         if (dto.getParentId() != null) {
             parent = discussionRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new IllegalArgumentException("Parent discussion not found"));
+            if (!parent.getAssignment().getId().equals(assignment.getId())) {
+                throw new IllegalArgumentException("Parent discussion does not belong to this assignment");
+            }
         }
 
         AssignmentDiscussion discussion = AssignmentDiscussion.builder()
@@ -263,6 +273,31 @@ public class AssignmentService {
                 .build();
 
         return mapToDiscussionResponse(discussionRepository.save(discussion));
+    }
+
+    private void validateAssignmentAccess(Assignment assignment, UserPrincipal principal) {
+        boolean isAdmin = principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return;
+        }
+
+        boolean isTeacher = principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"));
+        if (isTeacher) {
+            if (!assignment.getTeacher().getUser().getId().equals(principal.getId())) {
+                throw new AccessDeniedException("You are not authorized for this assignment");
+            }
+            return;
+        }
+
+        // Student validation
+        Student student = studentRepository.findByUserId(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Student profile not found"));
+        if (assignment.getStatus() != Status.published) {
+            throw new AccessDeniedException("Assignment is not published");
+        }
+        if (student.getClassroom() == null || !student.getClassroom().getId().equals(assignment.getClassroom().getId())) {
+            throw new AccessDeniedException("This assignment is not accessible to your classroom");
+        }
     }
 
     private void validateTeacherOwnership(Assignment assignment, UserPrincipal principal) {

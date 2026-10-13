@@ -54,6 +54,7 @@ public class SecurityConfig {
                     "/actuator/info",
                     "/ws/**"
                 ).permitAll()
+                .requestMatchers("/api/v1/admin/stop-impersonate").authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/teacher/**").hasAnyRole("ADMIN", "TEACHER")
                 .requestMatchers("/api/v1/student/**").hasAnyRole("ADMIN", "STUDENT")

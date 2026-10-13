@@ -46,8 +46,10 @@ export const ExamMonitor: React.FC = () => {
 
     // Setup STOMP WebSocket client
     const socketFactory = () => new SockJS('/ws');
+    const token = localStorage.getItem('token');
     const client = new Client({
       webSocketFactory: socketFactory,
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
