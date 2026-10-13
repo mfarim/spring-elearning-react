@@ -126,6 +126,60 @@ Daftar Ujian → Konfirmasi & Panduan → Ruang Ujian CBT Aman
 
 ---
 
+## 🏛️ Arsitektur Sistem Tingkat Tinggi (High-Level Architecture)
+
+Platform ini dirancang dengan arsitektur modular berlapis (*defense-in-depth decoupled micro-architecture*) yang siap di-deploy secara aman pada server VPS menggunakan Docker di balik reverse-proxy Cloudflare:
+
+```mermaid
+graph TD
+    Client["🌐 Klien / Peramban Web<br/>(Admin, Guru, Siswa)"]
+    
+    subgraph Edge ["🛡️ Perimeter & Lapisan Edge"]
+        CF["Cloudflare Edge Proxy<br/>• Proteksi WAF & Anti-DDoS<br/>• Terminasi SSL/TLS HTTPS<br/>• Passthrough Header CF-Connecting-IP"]
+    end
+
+    subgraph Host ["🖥️ Server VPS"]
+        Nginx["Host Reverse Proxy / Nginx<br/>• Port 80/443 Loopback (127.0.0.1)<br/>• Header Keamanan (nosniff, SAMEORIGIN)<br/>• Endpoint Actuator Diblokir (404)"]
+        
+        subgraph DockerNet ["Docker Network (elearning-network)"]
+            Frontend["📦 elearning-frontend<br/>React 19 SPA + Vite + Tailwind v4"]
+            
+            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.4.3<br/>• Spring Security 6 (Stateless JWT)<br/>• Rate Limiter Login Bucket4j (A07)<br/>• Broker Pesan WebSocket STOMP<br/>• Apache POI dengan Guard Batch"]
+            
+            Postgres[("🐘 elearning-postgres<br/>PostgreSQL 16 Relational DB<br/>• Migrasi Otomatis Flyway<br/>• HikariCP Connection Pool")]
+            
+            Redis[("⚡ elearning-redis<br/>Redis 7 In-Memory Cache<br/>• Broker Sesi & Telemetri CBT")]
+            
+            Storage[("📁 backend_storage<br/>Volume Docker Persisten<br/>• Direktori Upload (/app/storage/uploads)<br/>• Whitelist Ekstensi File Ketat")]
+        end
+    end
+
+    Client -->|HTTPS / WSS| CF
+    CF -->|Trafik Terlindungi| Nginx
+    Nginx -->|Aset Statis Web| Frontend
+    Nginx -->|/api/ & /ws| Backend
+    Backend -->|Kueri JDBC HikariCP| Postgres
+    Backend -->|Cache / STOMP PubSub| Redis
+    Backend -->|I/O Berkas Aman| Storage
+```
+
+### 🔒 Keamanan Enterprise & Kepatuhan Standar OWASP Top 10
+
+| Standar OWASP | Implementasi Mitigasi Keamanan pada Platform |
+|---|---|
+| **A01: Broken Access Control** | Otorisasi level method (`@PreAuthorize`) pada seluruh endpoint admin dan direktori user; validasi kepemilikan kelas untuk mencegah IDOR pada tugas dan diskusi; STOMP ChannelInterceptor memverifikasi hak akses guru/admin pada telemetri ujian. |
+| **A02: Cryptographic Failures** | Hashing password dengan BCrypt; token JWT bertanda tangan HMAC-SHA256 dengan validasi minimal 256-bit key saat aplikasi booting (*fail-fast* jika `JWT_SECRET` kosong). |
+| **A03: Injection** | 100% kueri parameterized melalui Spring Data JPA (mencegah SQL Injection); tidak ada eksekusi shell perintah OS; validasi DTO `@Valid`. |
+| **A04: Insecure Design** | Kunci jawaban dan pembahasan disembunyikan (`null`) dari payload siswa saat ujian; durasi ujian dikalkulasi di sisi server (*server-side deadline*), tidak mempercayai jam lokal klien. |
+| **A05: Security Misconfiguration** | Endpoint Actuator diblokir (`404`) dari Nginx publik; semua port Docker internal diikat ke loopback `127.0.0.1`; header keamanan HTTP (`nosniff`, `SAMEORIGIN`) aktif. |
+| **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.4.3, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker container berjalan menggunakan pengguna non-root `spring:spring`. |
+| **A07: Identification Failures** | **Rate Limiter Login Bucket4j**: Dibatasi maksimal 5 percobaan per menit per alamat IP (`CF-Connecting-IP` / `X-Forwarded-For`) dan per email akun, menghasilkan HTTP `429 Too Many Requests` disertai header `Retry-After`. |
+| **A08: Software & Data Integrity** | Whitelist ketat ekstensi file upload (`.pdf`, `.docx`, `.xlsx`, `.jpg`, `.png`, dll); ekstensi yang dapat dieksekusi atau berisi skrip (`.html`, `.svg`, `.exe`, `.sh`) ditolak keras untuk mencegah Stored XSS; unduhan disajikan dengan `Content-Disposition` aman. |
+| **A09: Logging & Monitoring** | Log pelanggaran anti-cheat ujian tercatat lengkap dengan identitas NIS siswa; probe internal `/actuator/health` tersedia untuk healthcheck container. |
+| **A10: SSRF** | Tidak ada fitur backend yang melakukan pemanggilan HTTP outbound ke URL luar dari input pengguna. |
+
+---
+
 ## 🏗️ Arsitektur Real-Time Telemetri & WebSocket
 
 Fitur monitoring ruang ujian CBT langsung memanfaatkan **Spring WebSocket dengan message broker STOMP** yang didukung Redis untuk memantau aktivitas kandidat secara instan tanpa perlu reload halaman.

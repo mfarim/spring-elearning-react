@@ -126,6 +126,60 @@ Exam List → Confirmation & Instructions → Secure Exam Runner
 
 ---
 
+## 🏛️ High-Level System Architecture
+
+The platform is designed with a defense-in-depth, decoupled micro-architecture ready for containerized VPS and cloud deployments behind Cloudflare:
+
+```mermaid
+graph TD
+    Client["🌐 Clients / Web Browsers<br/>(Admin, Teacher, Student)"]
+    
+    subgraph Edge ["🛡️ Perimeter & Edge Layer"]
+        CF["Cloudflare Edge Proxy<br/>• WAF & DDoS Shield<br/>• SSL/TLS Termination<br/>• CF-Connecting-IP Passthrough"]
+    end
+
+    subgraph Host ["🖥️ VPS Host Server"]
+        Nginx["Host Reverse Proxy / Nginx<br/>• Port 80/443 Loopback (127.0.0.1)<br/>• Security Headers (nosniff, SAMEORIGIN)<br/>• Actuator Endpoints Blocked (404)"]
+        
+        subgraph DockerNet ["Docker Network (elearning-network)"]
+            Frontend["📦 elearning-frontend<br/>React 19 SPA + Vite + Tailwind v4"]
+            
+            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.4.3<br/>• Spring Security 6 (Stateless JWT)<br/>• Bucket4j Login Rate Limiting (A07)<br/>• STOMP WebSocket Message Broker<br/>• Apache POI with Batch Guards"]
+            
+            Postgres[("🐘 elearning-postgres<br/>PostgreSQL 16 Relational DB<br/>• Flyway Automated Migrations<br/>• HikariCP Connection Pool")]
+            
+            Redis[("⚡ elearning-redis<br/>Redis 7 In-Memory Cache<br/>• Session & Telemetry Broker")]
+            
+            Storage[("📁 backend_storage<br/>Persistent Docker Volume<br/>• Uploads (/app/storage/uploads)<br/>• File Extension Whitelisting")]
+        end
+    end
+
+    Client -->|HTTPS / WSS| CF
+    CF -->|Proxied Traffic| Nginx
+    Nginx -->|Static Assets| Frontend
+    Nginx -->|/api/ & /ws| Backend
+    Backend -->|HikariCP / JPA| Postgres
+    Backend -->|Cache / STOMP PubSub| Redis
+    Backend -->|Safe File I/O| Storage
+```
+
+### 🔒 Enterprise Security & OWASP Top 10 Compliance
+
+| OWASP Standard | Mitigation in this Platform |
+|---|---|
+| **A01: Broken Access Control** | Method-level security (`@PreAuthorize`) on all administrative and user directory endpoints; classroom ownership validation preventing IDOR on assignments and discussions; STOMP WebSocket ChannelInterceptor verifying teacher/admin privileges. |
+| **A02: Cryptographic Failures** | BCrypt password hashing; HMAC-SHA256 JWT tokens with mandatory 256-bit+ secret key validation on application boot; automated fail-fast if `JWT_SECRET` is missing. |
+| **A03: Injection** | 100% parameterized Spring Data JPA queries eliminating SQL Injection; no OS command execution; strict input DTO `@Valid` constraints. |
+| **A04: Insecure Design** | Examination answer keys and explanations strictly stripped (`null`) from student payloads; examination duration deadlines enforced on the server-side, not trusting client clocks. |
+| **A05: Security Misconfiguration** | Spring Boot Actuator endpoints strictly blocked (`404`) from public Nginx reverse proxy; all Docker service ports bound to loopback `127.0.0.1`; security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) enforced. |
+| **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.4.3, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker containers running under non-root `spring:spring` user. |
+| **A07: Identification Failures** | **Bucket4j Login Rate Limiter**: 5 attempts per minute per IP address (`CF-Connecting-IP` / `X-Forwarded-For`) and per account email, returning `429 Too Many Requests` with `Retry-After` header. |
+| **A08: Software & Data Integrity** | Strict file upload extension whitelist (`.pdf`, `.docx`, `.xlsx`, `.jpg`, `.png`, etc.); executable and scriptable types (`.html`, `.svg`, `.exe`, `.sh`) explicitly rejected to prevent Stored XSS; safe download `Content-Disposition`. |
+| **A09: Logging & Monitoring** | Anti-cheat proctoring violation alerts logged with student NIS; internal `/actuator/health` probe available for container healthchecks. |
+| **A10: SSRF** | Zero user-controlled outbound HTTP requests from backend services. |
+
+---
+
 ## 🏗️ Real-Time Telemetry & WebSocket Architecture
 
 The live examination monitoring feature uses **Spring WebSocket with STOMP message broker** backed by Redis to monitor candidate progress in real time.
