@@ -104,8 +104,10 @@ public class AssignmentController {
 
     @GetMapping("/{id}/discussions")
     @Operation(summary = "Get discussion board for an assignment")
-    public ResponseEntity<ApiResponse<List<DiscussionResponse>>> getDiscussions(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(assignmentService.getDiscussions(id), "Discussions fetched"));
+    public ResponseEntity<ApiResponse<List<DiscussionResponse>>> getDiscussions(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(assignmentService.getDiscussions(id, principal), "Discussions fetched"));
     }
 
     @PostMapping("/{id}/discussions")

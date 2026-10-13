@@ -28,6 +28,7 @@ public class StudentController {
     private final StudentService studentService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Get all students with optional classroom filter")
     public ResponseEntity<ApiResponse<List<StudentResponse>>> getStudents(
             @RequestParam(required = false) Long classroomId) {
@@ -35,6 +36,7 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Get student by ID")
     public ResponseEntity<ApiResponse<StudentResponse>> getStudentById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(studentService.getStudentById(id), "Student details"));
