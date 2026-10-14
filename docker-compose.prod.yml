@@ -45,6 +45,7 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET}
       STORAGE_UPLOAD_DIR: /app/storage/uploads
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,https://spring-elearning.mfarim.com,http://spring-elearning.mfarim.com,https://*.mfarim.com}
     volumes:
       - backend_storage:/app/storage/uploads
     healthcheck:
