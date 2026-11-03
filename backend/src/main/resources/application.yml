@@ -1,5 +1,9 @@
 server:
   port: 8080
+  # Resolve the real client IP from X-Forwarded-For ONLY when the request comes from a trusted
+  # internal proxy (Tomcat RemoteIpValve). Default trusted ranges: 10/8, 172.16/12, 192.168/16,
+  # 169.254/16 and 127/8, i.e. the nginx container on the Docker network.
+  forward-headers-strategy: native
   servlet:
     context-path: /
 
@@ -47,18 +51,26 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==}
+    # REQUIRED: no default on purpose. Generate with: openssl rand -base64 32
+    secret: ${JWT_SECRET}
     access-token-expiration-ms: 900000      # 15 minutes
     refresh-token-expiration-ms: 604800000  # 7 days
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  security:
+    # true only for the public demo: skips forced password change and disables password changes
+    demo-mode: ${APP_DEMO_MODE:false}
+    # public self-registration (POST /api/v1/auth/register); accounts are normally created by admins
+    registration-enabled: ${APP_REGISTRATION_ENABLED:false}
   storage:
     upload-dir: ${STORAGE_UPLOAD_DIR:./storage/uploads}
 
 springdoc:
   api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /api-docs
   swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /swagger-ui.html
     operationsSorter: method
 
@@ -75,5 +87,5 @@ management:
 
 logging:
   level:
-    com.elearning: DEBUG
+    com.elearning: ${LOG_LEVEL_APP:INFO}
     org.springframework.security: INFO
