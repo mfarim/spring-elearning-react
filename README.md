@@ -1,7 +1,7 @@
 # 📚 Spring E-Learning & CBT Platform
 
 [![Java 21](https://img.shields.io/badge/Java-21_LTS-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4+-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5+-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org)
@@ -13,7 +13,7 @@
 >
 > 🐘 **Looking for the Laravel & Livewire edition?** A companion monolithic edition built with **Laravel 13, Livewire 3, and Laravel Reverb** is available at: [https://github.com/mfarim/laravel-elearning](https://github.com/mfarim/laravel-elearning)
 
-A full-featured enterprise web-based **E-Learning** and **Computer Based Test (CBT)** platform for managing modern academic learning activities between **Admin**, **Teacher**, and **Student**. Built with a decoupled cloud-ready architecture: **Java 21 LTS, Spring Boot 3.4+, React 19, and Tailwind CSS v4**, featuring stateless JWT authentication with impersonation, Redis cache, WebSocket STOMP real-time candidate proctoring, and Apache POI Excel batch processing.
+A full-featured enterprise web-based **E-Learning** and **Computer Based Test (CBT)** platform for managing modern academic learning activities between **Admin**, **Teacher**, and **Student**. Built with a decoupled cloud-ready architecture: **Java 21 LTS, Spring Boot 3.5+, React 19, and Tailwind CSS v4**, featuring stateless JWT authentication with impersonation, Redis cache, WebSocket STOMP real-time candidate proctoring, and Apache POI Excel batch processing.
 
 ---
 
@@ -112,7 +112,7 @@ Exam List → Confirmation & Instructions → Secure Exam Runner
 
 | Layer | Technology |
 |-------|------------|
-| **Backend Core** | Java 21 LTS, Spring Boot 3.4.3 |
+| **Backend Core** | Java 21 LTS, Spring Boot 3.5.7 |
 | **Security & Auth** | Spring Security 6, JJWT 0.12.6, Method Security (`@PreAuthorize`), Impersonation Engine |
 | **Persistence** | PostgreSQL 16, Spring Data JPA, Hibernate 6, HikariCP, Flyway Migrations |
 | **Cache & Realtime** | Redis 7, Spring WebSocket + STOMP Message Broker, SockJS |
@@ -144,7 +144,7 @@ graph TD
         subgraph DockerNet ["Docker Network (elearning-network)"]
             Frontend["📦 elearning-frontend<br/>React 19 SPA + Vite + Tailwind v4"]
             
-            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.4.3<br/>• Spring Security 6 (Stateless JWT)<br/>• Bucket4j Login Rate Limiting (A07)<br/>• STOMP WebSocket Message Broker<br/>• Apache POI with Batch Guards"]
+            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.5.7<br/>• Spring Security 6 (Stateless JWT)<br/>• Bucket4j Login Rate Limiting (A07)<br/>• STOMP WebSocket Message Broker<br/>• Apache POI with Batch Guards"]
             
             Postgres[("🐘 elearning-postgres<br/>PostgreSQL 16 Relational DB<br/>• Flyway Automated Migrations<br/>• HikariCP Connection Pool")]
             
@@ -172,7 +172,7 @@ graph TD
 | **A03: Injection** | 100% parameterized Spring Data JPA queries eliminating SQL Injection; no OS command execution; strict input DTO `@Valid` constraints. |
 | **A04: Insecure Design** | Examination answer keys and explanations strictly stripped (`null`) from student payloads; examination duration deadlines enforced on the server-side, not trusting client clocks. |
 | **A05: Security Misconfiguration** | Spring Boot Actuator endpoints strictly blocked (`404`) from public Nginx reverse proxy; all Docker service ports bound to loopback `127.0.0.1`; security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) enforced. |
-| **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.4.3, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker containers running under non-root `spring:spring` user. |
+| **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.5.7, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker containers running under non-root `spring:spring` user. |
 | **A07: Identification Failures** | **Bucket4j Login Rate Limiter**: 5 attempts per minute per IP address (`CF-Connecting-IP` / `X-Forwarded-For`) and per account email, returning `429 Too Many Requests` with `Retry-After` header. |
 | **A08: Software & Data Integrity** | Strict file upload extension whitelist (`.pdf`, `.docx`, `.xlsx`, `.jpg`, `.png`, etc.); executable and scriptable types (`.html`, `.svg`, `.exe`, `.sh`) explicitly rejected to prevent Stored XSS; safe download `Content-Disposition`. |
 | **A09: Logging & Monitoring** | Anti-cheat proctoring violation alerts logged with student NIS; internal `/actuator/health` probe available for container healthchecks. |
@@ -222,7 +222,7 @@ The live examination monitoring feature uses **Spring WebSocket with STOMP messa
 ### Prerequisites
 - Docker & Docker Compose
 - Java 21 LTS (for local backend development)
-- Node.js 20+ (for local frontend development)
+- Node.js 22+ (for local frontend development)
 
 ### Quick Setup (Docker Compose — Recommended)
 
@@ -230,6 +230,9 @@ The live examination monitoring feature uses **Spring WebSocket with STOMP messa
 # Clone the repository
 git clone https://github.com/mfarim/spring-elearning-react.git
 cd spring-elearning-react
+
+# Generate a JWT signing secret (required, no default)
+echo "JWT_SECRET=$(openssl rand -base64 32)" > .env
 
 # Launch full stack (PostgreSQL 16, Redis 7, Spring Boot backend, and React frontend)
 docker compose up -d
@@ -258,6 +261,8 @@ docker compose up -d postgres redis
 #### 2. Start Backend (Spring Boot)
 ```bash
 cd backend
+# JWT_SECRET must be set (same value as in .env)
+export $(grep JWT_SECRET ../.env)
 ./mvnw clean spring-boot:run
 ```
 
@@ -356,6 +361,17 @@ For production deployments:
 2. Configure external production PostgreSQL and Redis connection strings in environment variables (`SPRING_DATASOURCE_URL`, `SPRING_DATA_REDIS_HOST`).
 3. Set a strong JWT secret (`JWT_SECRET`) with a minimum of 256 bits.
 4. Deploy behind Nginx or Cloudflare with SSL/TLS termination and WebSocket header forwarding (`Upgrade` and `Connection` headers).
+5. Add your public domain to `APP_CORS_ALLOWED_ORIGINS` (also used as the allowed WebSocket origins).
+6. Default accounts must change their password on first login. Set `APP_DEMO_MODE=true` **only** on a public demo instance with shared demo accounts.
+7. Keep `SPRINGDOC_ENABLED=false` and `APP_REGISTRATION_ENABLED=false` unless you need them.
+8. **Real client IP / rate limiting:** the backend trusts `X-Forwarded-For` only from internal proxies (Docker network). If the site is behind Cloudflare, restore the visitor IP on the host Nginx, otherwise all users share Cloudflare's IPs for rate limiting:
+   ```nginx
+   # http {} block of the host nginx — keep the list in sync with https://www.cloudflare.com/ips/
+   set_real_ip_from 173.245.48.0/20;   # ...add every Cloudflare IPv4/IPv6 range
+   real_ip_header CF-Connecting-IP;
+   # and in the proxied location:
+   proxy_set_header X-Forwarded-For $remote_addr;
+   ```
 
 ---
 
