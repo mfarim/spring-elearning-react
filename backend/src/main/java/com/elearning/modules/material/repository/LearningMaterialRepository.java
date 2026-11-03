@@ -10,4 +10,5 @@ import java.util.List;
 public interface LearningMaterialRepository extends JpaRepository<LearningMaterial, Long> {
     List<LearningMaterial> findByTeacherId(Long teacherId);
     List<LearningMaterial> findByPublishedTrueAndClassroomId(Long classroomId);
+    List<LearningMaterial> findByFilePathOrFileUrl(String filePath, String fileUrl);
 }

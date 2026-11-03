@@ -1,6 +1,8 @@
 package com.elearning.common.controller;
 
+import com.elearning.common.service.FileAccessService;
 import com.elearning.common.service.FileStorageService;
+import com.elearning.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -20,6 +23,7 @@ import java.io.IOException;
 public class FileController {
 
     private final FileStorageService fileStorageService;
+    private final FileAccessService fileAccessService;
 
     private static final java.util.Set<String> SAFE_INLINE_MIME_TYPES = java.util.Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif",
@@ -30,13 +34,19 @@ public class FileController {
 
     @GetMapping("/**")
     @Operation(summary = "Download / View File")
-    public ResponseEntity<Resource> downloadFile(HttpServletRequest request) {
+    public ResponseEntity<Resource> downloadFile(HttpServletRequest request,
+                                                 @AuthenticationPrincipal UserPrincipal principal) {
         String path = request.getRequestURI();
         String filePath = path.replaceFirst("^/api/v1/files/", "");
 
         String lowerPath = filePath.toLowerCase();
         if (lowerPath.endsWith(".html") || lowerPath.endsWith(".htm") || lowerPath.endsWith(".svg") || lowerPath.endsWith(".jsp")) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+        }
+
+        // Authorization: 404 (not 403) so that the existence of other users' files is not revealed.
+        if (!fileAccessService.canRead(filePath, principal)) {
+            return ResponseEntity.notFound().build();
         }
 
         Resource resource = fileStorageService.loadFileAsResource(filePath);
@@ -56,6 +66,7 @@ public class FileController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition + "; filename=\"" + resource.getFilename() + "\"")
                 .header("X-Content-Type-Options", "nosniff")
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
                 .body(resource);
     }
 }

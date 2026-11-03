@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
+import { isProtectedFileUrl, isSafeExternalUrl, openProtectedFile } from '../../utils/files';
 import type { LearningMaterial, ApiResponse } from '../../types';
 import {
   ArrowLeft,
@@ -125,15 +126,28 @@ export const MaterialDetail: React.FC = () => {
                 <p className="text-xs text-slate-500">Unduh atau buka modul silabus pembelajaran</p>
               </div>
             </div>
-            <a
-              href={material.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition self-start sm:self-auto"
-            >
-              <Download className="w-4 h-4" />
-              <span>Buka Dokumen</span>
-            </a>
+            {isProtectedFileUrl(material.fileUrl) ? (
+              <button
+                type="button"
+                onClick={() => openProtectedFile(material.fileUrl!).catch(() => undefined)}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition cursor-pointer self-start sm:self-auto"
+              >
+                <Download className="w-4 h-4" />
+                <span>Buka Dokumen</span>
+              </button>
+            ) : isSafeExternalUrl(material.fileUrl) ? (
+              <a
+                href={material.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition self-start sm:self-auto"
+              >
+                <Download className="w-4 h-4" />
+                <span>Buka Dokumen</span>
+              </a>
+            ) : (
+              <span className="text-xs text-slate-500">Tautan lampiran tidak valid</span>
+            )}
           </div>
         )}
       </div>
