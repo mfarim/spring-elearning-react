@@ -40,12 +40,30 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Backend blocks every call until a default/admin-assigned password has been changed.
+    if (error.response?.status === 403 && error.response?.data?.code === 'PASSWORD_CHANGE_REQUIRED') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('user') || 'null');
+        if (stored) {
+          localStorage.setItem('user', JSON.stringify({ ...stored, mustChangePassword: true }));
+        }
+      } catch {
+        /* ignore malformed cache */
+      }
+      if (window.location.pathname !== '/change-password') {
+        window.location.href = '/change-password';
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Do not try to refresh if the 401 was from login, register, or refresh itself
       if (
         originalRequest.url?.includes('/auth/login') ||
         originalRequest.url?.includes('/auth/register') ||
-        originalRequest.url?.includes('/auth/refresh')
+        originalRequest.url?.includes('/auth/refresh') ||
+        originalRequest.url?.includes('/auth/logout') ||
+        originalRequest.url?.includes('/auth/change-password')
       ) {
         return Promise.reject(error);
       }

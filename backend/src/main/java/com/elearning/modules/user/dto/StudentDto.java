@@ -1,5 +1,6 @@
 package com.elearning.modules.user.dto;
 
+import jakarta.validation.constraints.Size;
 import com.elearning.common.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +24,7 @@ public class StudentDto {
     @NotBlank(message = "Email is required")
     private String email;
 
+    @Size(max = 72, message = "Password must be at most 72 characters")
     private String password;
 
     private String phone;

@@ -22,6 +22,11 @@ target/
 *.war
 .mvn/wrapper/maven-wrapper.jar
 
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
 # Logs & Storage
 *.log
 storage/uploads/

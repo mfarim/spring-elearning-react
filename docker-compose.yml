@@ -57,9 +57,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==}
-      APP_JWT_SECRET: ${JWT_SECRET:-dGhpcy1pcy1hLXZlcnktc2VjdXJlLTI1Ni1iaXQtbG9uZy1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZw==}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required - create .env with output of openssl rand -base64 32}
       STORAGE_UPLOAD_DIR: /app/storage/uploads
+      APP_DEMO_MODE: ${APP_DEMO_MODE:-false}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-DEBUG}
     ports:
       - "127.0.0.1:8080:8080"
     volumes:

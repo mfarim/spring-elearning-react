@@ -1,9 +1,12 @@
 package com.elearning.config;
 
+import com.elearning.modules.exam.repository.ExaminationRepository;
 import com.elearning.security.CustomUserDetailsService;
 import com.elearning.security.JwtProvider;
+import com.elearning.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -17,13 +20,16 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -32,8 +38,17 @@ import java.security.Principal;
 @Slf4j
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    /** The only broadcast destination clients may subscribe to (exact match, no wildcards). */
+    private static final Pattern EXAM_MONITOR_DESTINATION = Pattern.compile("^/topic/exams/(\\d+)/monitor$");
+    /** Private per-user queues resolved by Spring (/user/queue/...). */
+    private static final Pattern USER_QUEUE_DESTINATION = Pattern.compile("^/user/queue/[A-Za-z0-9_\\-/]+$");
+
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final ExaminationRepository examinationRepository;
+
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173}")
+    private List<String> allowedOrigins;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -43,12 +58,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        String[] origins = allowedOrigins.stream().map(String::trim).filter(o -> !o.isEmpty()).toArray(String[]::new);
+
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(origins)
                 .withSockJS();
 
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*");
+                .setAllowedOriginPatterns(origins);
     }
 
     @Override
@@ -57,56 +74,106 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (accessor == null) {
+                if (accessor == null || accessor.getCommand() == null) {
                     return message;
                 }
 
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    String authHeader = accessor.getFirstNativeHeader("Authorization");
-                    if (!StringUtils.hasText(authHeader)) {
-                        authHeader = accessor.getFirstNativeHeader("token");
-                    }
-
-                    if (StringUtils.hasText(authHeader)) {
-                        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-                        if (jwtProvider.validateToken(token)) {
-                            Long userId = jwtProvider.getUserIdFromToken(token);
-                            Long impersonatorAdminId = jwtProvider.getImpersonatorAdminIdFromToken(token);
-                            UserDetails userDetails = userDetailsService.loadUserById(userId, impersonatorAdminId);
-
-                            UsernamePasswordAuthenticationToken authentication =
-                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                            accessor.setUser(authentication);
-                            log.debug("WebSocket authenticated for user: {}", userDetails.getUsername());
-                        } else {
-                            log.warn("Invalid JWT token during WebSocket CONNECT");
-                            throw new AccessDeniedException("Invalid or expired WebSocket authentication token");
-                        }
-                    } else {
-                        log.warn("Missing Authorization header during WebSocket CONNECT");
-                        throw new AccessDeniedException("Authentication token required for WebSocket connection");
-                    }
-                } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-                    String destination = accessor.getDestination();
-                    Principal user = accessor.getUser();
-
-                    if (destination != null && destination.startsWith("/topic/exams/") && destination.endsWith("/monitor")) {
-                        if (user instanceof UsernamePasswordAuthenticationToken authToken) {
-                            boolean canMonitor = authToken.getAuthorities().stream()
-                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_TEACHER"));
-                            if (!canMonitor) {
-                                log.warn("Unauthorized exam monitor subscription attempt by user {}", user.getName());
-                                throw new AccessDeniedException("Forbidden: Only teachers and administrators can monitor live exams");
-                            }
-                        } else {
-                            log.warn("Unauthenticated exam monitor subscription attempt to {}", destination);
-                            throw new AccessDeniedException("Authentication required to subscribe to exam monitor");
-                        }
-                    }
+                switch (accessor.getCommand()) {
+                    case CONNECT, STOMP -> authenticate(accessor);
+                    case SUBSCRIBE -> authorizeSubscribe(accessor);
+                    case SEND -> authorizeSend(accessor);
+                    default -> { /* DISCONNECT, UNSUBSCRIBE, ACK, ... */ }
                 }
-
                 return message;
             }
         });
+    }
+
+    private void authenticate(StompHeaderAccessor accessor) {
+        String authHeader = accessor.getFirstNativeHeader("Authorization");
+        if (!StringUtils.hasText(authHeader)) {
+            authHeader = accessor.getFirstNativeHeader("token");
+        }
+        if (!StringUtils.hasText(authHeader)) {
+            log.warn("Missing Authorization header during WebSocket CONNECT");
+            throw new AccessDeniedException("Authentication token required for WebSocket connection");
+        }
+
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        if (!jwtProvider.validateAccessToken(token)) {
+            log.warn("Invalid JWT token during WebSocket CONNECT");
+            throw new AccessDeniedException("Invalid or expired WebSocket authentication token");
+        }
+
+        UserPrincipal userDetails;
+        try {
+            userDetails = (UserPrincipal) userDetailsService.loadUserById(
+                    jwtProvider.getUserIdFromToken(token),
+                    jwtProvider.getImpersonatorAdminIdFromToken(token));
+        } catch (UsernameNotFoundException e) {
+            throw new AccessDeniedException("User no longer exists");
+        }
+        if (!userDetails.isEnabled()) {
+            throw new AccessDeniedException("Account is inactive");
+        }
+
+        accessor.setUser(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+        log.debug("WebSocket authenticated for user id {}", userDetails.getId());
+    }
+
+    private void authorizeSubscribe(StompHeaderAccessor accessor) {
+        UserPrincipal user = requireUser(accessor.getUser());
+        String destination = accessor.getDestination();
+
+        // Deny-by-default. Pattern subscriptions (e.g. /topic/** or /topic/exams/*/monitor) are rejected
+        // because the simple broker would otherwise deliver every matching destination.
+        if (destination == null || destination.contains("*") || destination.contains("{") || destination.contains("?")) {
+            throw deny(user, destination);
+        }
+
+        Matcher monitor = EXAM_MONITOR_DESTINATION.matcher(destination);
+        if (monitor.matches()) {
+            Long examId = Long.valueOf(monitor.group(1));
+            boolean isAdmin = hasRole(user, "ROLE_ADMIN");
+            boolean isOwnerTeacher = hasRole(user, "ROLE_TEACHER")
+                    && examinationRepository.existsByIdAndTeacher_User_Id(examId, user.getId());
+            if (!isAdmin && !isOwnerTeacher) {
+                throw deny(user, destination);
+            }
+            return;
+        }
+
+        if (USER_QUEUE_DESTINATION.matcher(destination).matches()) {
+            return;
+        }
+
+        throw deny(user, destination);
+    }
+
+    private void authorizeSend(StompHeaderAccessor accessor) {
+        UserPrincipal user = requireUser(accessor.getUser());
+        String destination = accessor.getDestination();
+        // Clients may only send to application handlers (/app/**), never straight to the broker,
+        // otherwise anyone could inject fake events into /topic/exams/{id}/monitor.
+        if (destination == null || !destination.startsWith("/app/")) {
+            throw deny(user, destination);
+        }
+    }
+
+    private UserPrincipal requireUser(Principal principal) {
+        if (principal instanceof UsernamePasswordAuthenticationToken auth
+                && auth.getPrincipal() instanceof UserPrincipal userPrincipal) {
+            return userPrincipal;
+        }
+        throw new AccessDeniedException("Authentication required");
+    }
+
+    private boolean hasRole(UserPrincipal user, String role) {
+        return user.getAuthorities().stream().anyMatch(a -> role.equals(a.getAuthority()));
+    }
+
+    private AccessDeniedException deny(UserPrincipal user, String destination) {
+        log.warn("Forbidden WebSocket destination '{}' requested by user id {}", destination, user.getId());
+        return new AccessDeniedException("Forbidden destination");
     }
 }

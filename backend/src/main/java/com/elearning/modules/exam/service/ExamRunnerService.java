@@ -298,6 +298,13 @@ public class ExamRunnerService {
         if (!answer.getExamAttempt().getId().equals(attempt.getId())) {
             throw new IllegalArgumentException("Answer does not belong to this attempt");
         }
+        if (answer.getQuestion().getQuestionType() != QuestionType.essay) {
+            throw new IllegalArgumentException("Only essay answers can be graded manually");
+        }
+        int maxPoints = answer.getQuestion().getPoints() != null ? answer.getQuestion().getPoints() : 1;
+        if (dto.getPointsEarned() < 0 || dto.getPointsEarned() > maxPoints) {
+            throw new IllegalArgumentException("Points must be between 0 and " + maxPoints);
+        }
 
         answer.setPointsEarned(dto.getPointsEarned());
         answer.setFeedback(dto.getFeedback());

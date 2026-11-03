@@ -7,6 +7,7 @@ export interface User {
   roles: Role[];
   active: boolean;
   impersonatedBy?: number | null;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthResponse {
@@ -18,6 +19,8 @@ export interface AuthResponse {
   email: string;
   roles: Role[];
   impersonatedBy?: number | null;
+  impersonatorAdminId?: number | null;
+  mustChangePassword?: boolean;
 }
 
 export interface Classroom {

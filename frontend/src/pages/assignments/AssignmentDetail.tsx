@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
+import { openProtectedFile } from '../../utils/files';
 import type {
   Assignment,
   Submission,
@@ -272,15 +273,14 @@ export const AssignmentDetail: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         {s.filePath ? (
-                          <a
-                            href={`/api/v1/files/${s.filePath}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center space-x-1 text-xs text-emerald-600 font-semibold hover:underline"
+                          <button
+                            type="button"
+                            onClick={() => openProtectedFile(`/api/v1/files/${s.filePath}`).catch(() => undefined)}
+                            className="inline-flex items-center space-x-1 text-xs text-emerald-600 font-semibold hover:underline cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>Unduh</span>
-                          </a>
+                          </button>
                         ) : (
                           <span className="text-xs text-slate-400">-</span>
                         )}

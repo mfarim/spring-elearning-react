@@ -1,7 +1,7 @@
 # 📚 Spring E-Learning & Platform CBT
 
 [![Java 21](https://img.shields.io/badge/Java-21_LTS-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4+-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5+-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org)
@@ -13,7 +13,7 @@
 >
 > 🐘 **Mencari edisi Laravel & Livewire?** Edisi monolitik pendamping yang dibangun dengan **Laravel 13, Livewire 3, dan Laravel Reverb** tersedia di: [https://github.com/mfarim/laravel-elearning](https://github.com/mfarim/laravel-elearning)
 
-Platform web **E-Learning** dan **Computer Based Test (CBT)** tingkat enterprise berfitur lengkap untuk mengelola kegiatan pembelajaran modern antara **Admin**, **Guru**, dan **Siswa**. Dibangun dengan arsitektur terpisah (*decoupled micro-architecture*) modern: **Java 21 LTS, Spring Boot 3.4+, React 19, dan Tailwind CSS v4**, dilengkapi autentikasi stateless JWT dengan impersonasi akun, cache Redis, proctoring telemetri ujian langsung secara real-time via WebSocket STOMP, serta batch import Excel Apache POI.
+Platform web **E-Learning** dan **Computer Based Test (CBT)** tingkat enterprise berfitur lengkap untuk mengelola kegiatan pembelajaran modern antara **Admin**, **Guru**, dan **Siswa**. Dibangun dengan arsitektur terpisah (*decoupled micro-architecture*) modern: **Java 21 LTS, Spring Boot 3.5+, React 19, dan Tailwind CSS v4**, dilengkapi autentikasi stateless JWT dengan impersonasi akun, cache Redis, proctoring telemetri ujian langsung secara real-time via WebSocket STOMP, serta batch import Excel Apache POI.
 
 ---
 
@@ -112,7 +112,7 @@ Daftar Ujian → Konfirmasi & Panduan → Ruang Ujian CBT Aman
 
 | Layer | Teknologi |
 |-------|-----------|
-| **Backend Core** | Java 21 LTS, Spring Boot 3.4.3 |
+| **Backend Core** | Java 21 LTS, Spring Boot 3.5.7 |
 | **Keamanan & Auth** | Spring Security 6, JJWT 0.12.6, Method Security (`@PreAuthorize`), Impersonation Engine |
 | **Basis Data** | PostgreSQL 16, Spring Data JPA, Hibernate 6, HikariCP, Flyway Migrations |
 | **Cache & Realtime** | Redis 7, Spring WebSocket + STOMP Message Broker, SockJS |
@@ -144,7 +144,7 @@ graph TD
         subgraph DockerNet ["Docker Network (elearning-network)"]
             Frontend["📦 elearning-frontend<br/>React 19 SPA + Vite + Tailwind v4"]
             
-            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.4.3<br/>• Spring Security 6 (Stateless JWT)<br/>• Rate Limiter Login Bucket4j (A07)<br/>• Broker Pesan WebSocket STOMP<br/>• Apache POI dengan Guard Batch"]
+            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.5.7<br/>• Spring Security 6 (Stateless JWT)<br/>• Rate Limiter Login Bucket4j (A07)<br/>• Broker Pesan WebSocket STOMP<br/>• Apache POI dengan Guard Batch"]
             
             Postgres[("🐘 elearning-postgres<br/>PostgreSQL 16 Relational DB<br/>• Migrasi Otomatis Flyway<br/>• HikariCP Connection Pool")]
             
@@ -172,7 +172,7 @@ graph TD
 | **A03: Injection** | 100% kueri parameterized melalui Spring Data JPA (mencegah SQL Injection); tidak ada eksekusi shell perintah OS; validasi DTO `@Valid`. |
 | **A04: Insecure Design** | Kunci jawaban dan pembahasan disembunyikan (`null`) dari payload siswa saat ujian; durasi ujian dikalkulasi di sisi server (*server-side deadline*), tidak mempercayai jam lokal klien. |
 | **A05: Security Misconfiguration** | Endpoint Actuator diblokir (`404`) dari Nginx publik; semua port Docker internal diikat ke loopback `127.0.0.1`; header keamanan HTTP (`nosniff`, `SAMEORIGIN`) aktif. |
-| **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.4.3, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker container berjalan menggunakan pengguna non-root `spring:spring`. |
+| **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.5.7, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker container berjalan menggunakan pengguna non-root `spring:spring`. |
 | **A07: Identification Failures** | **Rate Limiter Login Bucket4j**: Dibatasi maksimal 5 percobaan per menit per alamat IP (`CF-Connecting-IP` / `X-Forwarded-For`) dan per email akun, menghasilkan HTTP `429 Too Many Requests` disertai header `Retry-After`. |
 | **A08: Software & Data Integrity** | Whitelist ketat ekstensi file upload (`.pdf`, `.docx`, `.xlsx`, `.jpg`, `.png`, dll); ekstensi yang dapat dieksekusi atau berisi skrip (`.html`, `.svg`, `.exe`, `.sh`) ditolak keras untuk mencegah Stored XSS; unduhan disajikan dengan `Content-Disposition` aman. |
 | **A09: Logging & Monitoring** | Log pelanggaran anti-cheat ujian tercatat lengkap dengan identitas NIS siswa; probe internal `/actuator/health` tersedia untuk healthcheck container. |
@@ -221,7 +221,7 @@ Fitur monitoring ruang ujian CBT langsung memanfaatkan **Spring WebSocket dengan
 ### Prasyarat
 - Docker & Docker Compose
 - Java 21 LTS (untuk development backend lokal)
-- Node.js 20+ (untuk development frontend lokal)
+- Node.js 22+ (untuk development frontend lokal)
 
 ### Setup Cepat (Docker Compose — Direkomendasikan)
 
@@ -229,6 +229,9 @@ Fitur monitoring ruang ujian CBT langsung memanfaatkan **Spring WebSocket dengan
 # Clone repository
 git clone https://github.com/mfarim/spring-elearning-react.git
 cd spring-elearning-react
+
+# Buat JWT signing secret (wajib, tidak ada nilai default)
+echo "JWT_SECRET=$(openssl rand -base64 32)" > .env
 
 # Jalankan seluruh stack (PostgreSQL 16, Redis 7, Spring Boot backend, dan React frontend)
 docker compose up -d
@@ -257,6 +260,8 @@ docker compose up -d postgres redis
 #### 2. Jalankan Backend (Spring Boot)
 ```bash
 cd backend
+# JWT_SECRET wajib di-set (nilai sama dengan di .env)
+export $(grep JWT_SECRET ../.env)
 ./mvnw clean spring-boot:run
 ```
 
@@ -355,6 +360,17 @@ Untuk menerapkan ke server production:
 2. Arahkan koneksi PostgreSQL dan Redis ke server database production melalui variabel lingkungan (`SPRING_DATASOURCE_URL`, `SPRING_DATA_REDIS_HOST`).
 3. Tentukan kunci rahasia token JWT (`JWT_SECRET`) minimal 256-bit acak.
 4. Gunakan Nginx atau Cloudflare sebagai reverse proxy dengan enkripsi SSL/TLS dan pastikan mengaktifkan penerusan header WebSocket (`Upgrade` dan `Connection`).
+5. Masukkan domain publik ke `APP_CORS_ALLOWED_ORIGINS` (dipakai juga sebagai origin WebSocket yang diizinkan).
+6. Akun default wajib ganti password saat login pertama. Set `APP_DEMO_MODE=true` **hanya** untuk instance demo publik dengan akun demo bersama.
+7. Biarkan `SPRINGDOC_ENABLED=false` dan `APP_REGISTRATION_ENABLED=false` kecuali memang dibutuhkan.
+8. **IP asli klien / rate limiting:** backend hanya mempercayai `X-Forwarded-For` dari proxy internal (jaringan Docker). Jika situs berada di belakang Cloudflare, pulihkan IP pengunjung di Nginx host, jika tidak semua user akan berbagi IP Cloudflare untuk rate limit:
+   ```nginx
+   # blok http {} di nginx host — samakan daftarnya dengan https://www.cloudflare.com/ips/
+   set_real_ip_from 173.245.48.0/20;   # ...tambahkan semua range IPv4/IPv6 Cloudflare
+   real_ip_header CF-Connecting-IP;
+   # dan di location yang di-proxy:
+   proxy_set_header X-Forwarded-For $remote_addr;
+   ```
 
 ---
 

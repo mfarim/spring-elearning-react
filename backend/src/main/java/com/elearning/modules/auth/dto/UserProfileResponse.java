@@ -22,4 +22,5 @@ public class UserProfileResponse {
     private Long classroomId;
     private String classroomName;
     private boolean impersonated;
+    private boolean mustChangePassword;
 }

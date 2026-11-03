@@ -9,6 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -31,19 +32,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String token = getJwtFromRequest(request);
 
-        if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
-            Long userId = jwtProvider.getUserIdFromToken(token);
-            Long impersonatorAdminId = jwtProvider.getImpersonatorAdminIdFromToken(token);
+        // Only access tokens are accepted as Bearer credentials (refresh tokens are rejected).
+        if (StringUtils.hasText(token) && jwtProvider.validateAccessToken(token)) {
+            try {
+                Long userId = jwtProvider.getUserIdFromToken(token);
+                Long impersonatorAdminId = jwtProvider.getImpersonatorAdminIdFromToken(token);
 
-            UserDetails userDetails = userDetailsService.loadUserById(userId, impersonatorAdminId);
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities()
-            );
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UserDetails userDetails = userDetailsService.loadUserById(userId, impersonatorAdminId);
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Deactivated / locked accounts lose access immediately, even with an unexpired token.
+                if (userDetails.isEnabled() && userDetails.isAccountNonLocked()) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (UsernameNotFoundException ignored) {
+                // User was deleted after the token was issued: treat request as unauthenticated.
+            }
         }
 
         filterChain.doFilter(request, response);

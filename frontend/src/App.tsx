@@ -20,6 +20,7 @@ import { ExamRunner } from './pages/exams/ExamRunner';
 import { AssignmentList } from './pages/assignments/AssignmentList';
 import { AssignmentDetail } from './pages/assignments/AssignmentDetail';
 import { Grades } from './pages/student/Grades';
+import { ChangePassword } from './pages/auth/ChangePassword';
 
 export const App: React.FC = () => {
   const { initAuth } = useAuthStore();
@@ -32,6 +33,11 @@ export const App: React.FC = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+
+        {/* Change password (also forced for default / admin-assigned passwords) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/change-password" element={<ChangePassword />} />
+        </Route>
 
         {/* Dedicated Standalone CBT Fullscreen Test Room */}
         <Route element={<ProtectedRoute allowedRoles={['ROLE_STUDENT', 'ROLE_ADMIN']} />}>

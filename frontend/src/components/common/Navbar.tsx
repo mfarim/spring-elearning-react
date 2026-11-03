@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { LogOut, UserCheck, ShieldAlert, Menu, X } from 'lucide-react';
+import { LogOut, UserCheck, ShieldAlert, Menu, X, KeyRound } from 'lucide-react';
 
 interface NavbarProps {
   onToggleMobileMenu?: () => void;
@@ -95,6 +96,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
             </div>
             {getRoleBadge()}
           </div>
+
+          {!user?.impersonatedBy && (
+            <Link
+              to="/change-password"
+              title="Ganti Password"
+              className="flex items-center space-x-1.5 text-sm text-gray-600 hover:text-emerald-700 transition px-2.5 sm:px-3 py-2 rounded-lg hover:bg-emerald-50"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span className="font-medium hidden lg:inline">Password</span>
+            </Link>
+          )}
 
           <button
             onClick={logout}

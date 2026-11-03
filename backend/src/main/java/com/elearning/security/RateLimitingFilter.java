@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import com.github.benmanes.caffeine.cache.Cache;
+
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Server-Side Rate Limiting Filter using Bucket4j.
@@ -28,9 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private final Map<String, Bucket> authIpBuckets = new ConcurrentHashMap<>();
-    private final Map<String, Bucket> submitIpBuckets = new ConcurrentHashMap<>();
-    private final Map<String, Bucket> generalIpBuckets = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> authIpBuckets = LoginRateLimiterService.newBucketCache();
+    private final Cache<String, Bucket> submitIpBuckets = LoginRateLimiterService.newBucketCache();
+    private final Cache<String, Bucket> generalIpBuckets = LoginRateLimiterService.newBucketCache();
 
     // Rate limit thresholds
     private static final int AUTH_CAPACITY = 10;            // 10 login/auth requests per minute per IP
@@ -65,8 +65,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
 
         // 1. Strictest tier: Auth endpoints (Login, Refresh, Register)
-        if (requestUri.startsWith("/api/v1/auth/login") || requestUri.startsWith("/api/v1/auth/register")) {
-            Bucket authBucket = authIpBuckets.computeIfAbsent(
+        if (requestUri.startsWith("/api/v1/auth/login") || requestUri.startsWith("/api/v1/auth/register")
+                || requestUri.startsWith("/api/v1/auth/change-password")) {
+            Bucket authBucket = authIpBuckets.get(
                     clientIp,
                     k -> createBucket(AUTH_CAPACITY, Duration.ofMinutes(1))
             );
@@ -79,7 +80,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         // 2. Medium tier: Exam autosave and submissions (anti-flood during high-concurrency CBT)
         else if (requestUri.contains("/exams/") && (requestUri.endsWith("/submit") || requestUri.endsWith("/answer") || requestUri.endsWith("/answers"))) {
-            Bucket submitBucket = submitIpBuckets.computeIfAbsent(
+            Bucket submitBucket = submitIpBuckets.get(
                     clientIp,
                     k -> createBucket(SUBMIT_CAPACITY, Duration.ofMinutes(1))
             );
@@ -92,7 +93,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         // 3. General API tier: All other /api/v1/** endpoints
         else if (requestUri.startsWith("/api/v1")) {
-            Bucket generalBucket = generalIpBuckets.computeIfAbsent(
+            Bucket generalBucket = generalIpBuckets.get(
                     clientIp,
                     k -> createBucket(GENERAL_CAPACITY, Duration.ofMinutes(1))
             );

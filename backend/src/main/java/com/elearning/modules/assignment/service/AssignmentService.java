@@ -181,13 +181,21 @@ public class AssignmentService {
         if (student.getClassroom() == null || !student.getClassroom().getId().equals(assignment.getClassroom().getId())) {
             throw new AccessDeniedException("This assignment is not for your class");
         }
+        if (assignment.getStatus() != Status.published) {
+            throw new AccessDeniedException("Assignment is not published");
+        }
+
+        Optional<AssignmentSubmission> existing = submissionRepository.findByAssignmentIdAndStudentId(assignmentId, student.getId());
+        if (existing.isPresent() && "graded".equals(existing.get().getStatus())) {
+            throw new IllegalStateException("Tugas sudah dinilai dan tidak dapat dikirim ulang");
+        }
 
         String storedPath = null;
         if (file != null && !file.isEmpty()) {
             storedPath = fileStorageService.storeFile(file, "submissions");
         }
 
-        AssignmentSubmission submission = submissionRepository.findByAssignmentIdAndStudentId(assignmentId, student.getId())
+        AssignmentSubmission submission = existing
                 .orElseGet(() -> AssignmentSubmission.builder()
                         .assignment(assignment)
                         .student(student)
@@ -225,6 +233,11 @@ public class AssignmentService {
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found: " + submissionId));
 
         validateTeacherOwnership(submission.getAssignment(), principal);
+
+        Integer maxScore = submission.getAssignment().getMaxScore();
+        if (maxScore != null && dto.getScore() > maxScore) {
+            throw new IllegalArgumentException("Score cannot exceed the assignment max score (" + maxScore + ")");
+        }
 
         submission.setScore(dto.getScore());
         submission.setFeedback(dto.getFeedback());

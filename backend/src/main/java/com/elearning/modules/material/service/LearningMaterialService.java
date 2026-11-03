@@ -112,7 +112,7 @@ public class LearningMaterialService {
         }
 
         String storedFilePath = null;
-        String fileUrl = dto.getFileUrl();
+        String fileUrl = validateExternalFileUrl(dto.getFileUrl(), null);
         if (file != null && !file.isEmpty()) {
             storedFilePath = fileStorageService.storeFile(file, "materials");
             fileUrl = "/api/v1/files/" + storedFilePath;
@@ -161,7 +161,7 @@ public class LearningMaterialService {
             material.setFilePath(storedPath);
             material.setFileUrl("/api/v1/files/" + storedPath);
         } else if (dto.getFileUrl() != null) {
-            material.setFileUrl(dto.getFileUrl());
+            material.setFileUrl(validateExternalFileUrl(dto.getFileUrl(), material.getFileUrl()));
         }
 
         material.setSubject(subject);
@@ -253,5 +253,25 @@ public class LearningMaterialService {
                 .hasViewed(hasViewed)
                 .createdAt(m.getCreatedAt())
                 .build();
+    }
+
+    /**
+     * Teacher-supplied links must be plain http(s) URLs. Internal /api/v1/files/ links are only accepted when
+     * they are unchanged (the edit form re-sends the existing value), so a material cannot be pointed at
+     * someone else's uploaded file. javascript:, data:, etc. are rejected.
+     */
+    private String validateExternalFileUrl(String url, String currentUrl) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        String trimmed = url.trim();
+        if (trimmed.equals(currentUrl)) {
+            return currentUrl;
+        }
+        String lower = trimmed.toLowerCase();
+        if ((lower.startsWith("https://") || lower.startsWith("http://")) && trimmed.length() <= 2048) {
+            return trimmed;
+        }
+        throw new IllegalArgumentException("Tautan lampiran harus berupa URL http:// atau https:// yang valid");
     }
 }

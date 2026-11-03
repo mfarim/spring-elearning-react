@@ -11,4 +11,5 @@ import java.util.List;
 public interface ExaminationRepository extends JpaRepository<Examination, Long> {
     List<Examination> findByTeacherId(Long teacherId);
     List<Examination> findByClassroomIdAndStatus(Long classroomId, Status status);
+    boolean existsByIdAndTeacher_User_Id(Long id, Long userId);
 }

@@ -21,6 +21,7 @@ public class UserPrincipal implements UserDetails {
     private final boolean active;
     private final Collection<? extends GrantedAuthority> authorities;
     private final Long impersonatorAdminId;
+    private final boolean mustChangePassword;
 
     public static UserPrincipal create(User user, Long impersonatorAdminId) {
         Collection<GrantedAuthority> authorities = user.getRoles().stream()
@@ -34,7 +35,8 @@ public class UserPrincipal implements UserDetails {
                 user.getPassword(),
                 user.isActive(),
                 authorities,
-                impersonatorAdminId
+                impersonatorAdminId,
+                user.isMustChangePassword()
         );
     }
 
