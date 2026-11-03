@@ -31,8 +31,8 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const user = await login(email, password);
+      navigate(user.mustChangePassword ? '/change-password' : '/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Email atau password yang Anda masukkan salah');
     } finally {

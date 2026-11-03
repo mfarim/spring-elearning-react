@@ -72,6 +72,7 @@ public class StudentService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(rawPassword))
+                .mustChangePassword(true)
                 .phone(dto.getPhone())
                 .active(true)
                 .roles(new HashSet<>(Collections.singletonList(studentRole)))
@@ -117,6 +118,7 @@ public class StudentService {
         user.setPhone(dto.getPhone());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setMustChangePassword(true);
         }
         userRepository.save(user);
 
@@ -225,6 +227,7 @@ public class StudentService {
                             .name(name)
                             .email(email)
                             .password(passwordEncoder.encode("Student@123"))
+                            .mustChangePassword(true)
                             .phone(phone.isEmpty() ? null : phone)
                             .active(true)
                             .roles(new HashSet<>(Collections.singletonList(studentRole)))

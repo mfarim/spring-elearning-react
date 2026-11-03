@@ -44,6 +44,26 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(response, "Token refreshed successfully"));
     }
 
+    @PostMapping("/auth/logout")
+    @Operation(summary = "Logout", description = "Revoke the given refresh token so it can no longer be used")
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Logged out"));
+    }
+
+    @PostMapping("/auth/change-password")
+    @Operation(summary = "Change Password", description = "Change own password; revokes all existing refresh tokens")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ApiResponse<AuthResponse>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        if (principal == null) {
+            throw new org.springframework.security.authentication.BadCredentialsException("Authentication required");
+        }
+        return ResponseEntity.ok(ApiResponse.ok(authService.changePassword(principal, request), "Password changed successfully"));
+    }
+
     @PostMapping("/auth/register")
     @Operation(summary = "Student Registration", description = "Register a new student account")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import type { Role } from '../../types';
 
@@ -9,6 +9,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
   const { isAuthenticated, user, isLoading } = useAuthStore();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -20,6 +21,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   if (allowedRoles && !allowedRoles.some((role) => user.roles.includes(role))) {

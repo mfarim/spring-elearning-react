@@ -1,5 +1,6 @@
 package com.elearning.modules.user.dto;
 
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ public class TeacherDto {
     @NotBlank(message = "Email is required")
     private String email;
 
+    @Size(max = 72, message = "Password must be at most 72 characters")
     private String password;
 
     private String phone;

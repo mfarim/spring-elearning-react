@@ -60,6 +60,7 @@ public class TeacherService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(rawPassword))
+                .mustChangePassword(true)
                 .phone(dto.getPhone())
                 .active(true)
                 .roles(new HashSet<>(Collections.singletonList(teacherRole)))
@@ -95,6 +96,7 @@ public class TeacherService {
         user.setPhone(dto.getPhone());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setMustChangePassword(true);
         }
         userRepository.save(user);
 
