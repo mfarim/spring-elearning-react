@@ -13,7 +13,7 @@
 >
 > 🐘 **Mencari edisi Laravel & Livewire?** Edisi monolitik pendamping yang dibangun dengan **Laravel 13, Livewire 3, dan Laravel Reverb** tersedia di: [https://github.com/mfarim/laravel-elearning](https://github.com/mfarim/laravel-elearning)
 
-Platform web **E-Learning** dan **Computer Based Test (CBT)** tingkat enterprise berfitur lengkap untuk mengelola kegiatan pembelajaran modern antara **Admin**, **Guru**, dan **Siswa**. Dibangun dengan arsitektur terpisah (*decoupled micro-architecture*) modern: **Java 21 LTS, Spring Boot 3.5+, React 19, dan Tailwind CSS v4**, dilengkapi autentikasi stateless JWT dengan impersonasi akun, cache Redis, proctoring telemetri ujian langsung secara real-time via WebSocket STOMP, serta batch import Excel Apache POI.
+Platform web **E-Learning** dan **Computer Based Test (CBT)** berfitur lengkap untuk mengelola kegiatan pembelajaran modern antara **Admin**, **Guru**, dan **Siswa**. Dibangun sebagai *modular monolith* dalam container dengan frontend SPA terpisah: **Java 21 LTS, Spring Boot 3.5+, React 19, dan Tailwind CSS v4**, dilengkapi autentikasi stateless JWT dengan rotasi refresh token di Redis dan impersonasi akun, proctoring telemetri ujian langsung secara real-time via WebSocket STOMP, serta batch import Excel Apache POI.
 
 ---
 
@@ -115,20 +115,20 @@ Daftar Ujian → Konfirmasi & Panduan → Ruang Ujian CBT Aman
 | **Backend Core** | Java 21 LTS, Spring Boot 3.5.7 |
 | **Keamanan & Auth** | Spring Security 6, JJWT 0.12.6, Method Security (`@PreAuthorize`), Impersonation Engine |
 | **Basis Data** | PostgreSQL 16, Spring Data JPA, Hibernate 6, HikariCP, Flyway Migrations |
-| **Cache & Realtime** | Redis 7, Spring WebSocket + STOMP Message Broker, SockJS |
+| **Token Store & Realtime** | Redis 7 (rotasi & pencabutan refresh token), Spring WebSocket + STOMP (simple broker in-memory), SockJS |
 | **Pemrosesan Berkas** | Apache POI (Parsing batch Excel `.xlsx` untuk Siswa & Bank Soal) |
 | **Dokumentasi API** | Springdoc OpenAPI 3 / Swagger UI (`/swagger-ui/index.html`) |
 | **Frontend Core** | React 19, TypeScript 5+, Vite 6 |
 | **Styling** | Tailwind CSS v4 (Mesin Native CSS via `@tailwindcss/vite`) |
 | **Manajemen State** | Zustand 5, Axios dengan interceptor token JWT |
 | **Ikon & Desain** | Lucide React |
-| **Deployment** | Docker Compose, Multi-stage Dockerfiles (OpenJDK 21 Alpine & Node 20 Alpine) |
+| **Deployment** | Docker Compose, Multi-stage Dockerfiles (OpenJDK 21 Alpine & Node 22 Alpine), Nginx 1.28 |
 
 ---
 
 ## 🏛️ Arsitektur Sistem Tingkat Tinggi (High-Level Architecture)
 
-Platform ini dirancang dengan arsitektur modular berlapis (*defense-in-depth decoupled micro-architecture*) yang siap di-deploy secara aman pada server VPS menggunakan Docker di balik reverse-proxy Cloudflare:
+Platform ini berupa **modular monolith** (satu service Spring Boot yang dibagi per modul domain) dengan React SPA terpisah, di-deploy sebagai container Docker di VPS di balik Cloudflare, dengan pengamanan berlapis di setiap layer. Model data, alur request, keputusan desain, dan batas skalabilitas dijelaskan di [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```mermaid
 graph TD
@@ -144,11 +144,11 @@ graph TD
         subgraph DockerNet ["Docker Network (elearning-network)"]
             Frontend["📦 elearning-frontend<br/>React 19 SPA + Vite + Tailwind v4"]
             
-            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.5.7<br/>• Spring Security 6 (Stateless JWT)<br/>• Rate Limiter Login Bucket4j (A07)<br/>• Broker Pesan WebSocket STOMP<br/>• Apache POI dengan Guard Batch"]
+            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.5.7<br/>• Spring Security 6 (Stateless JWT)<br/>• Rate Limiter Login Bucket4j (A07)<br/>• WebSocket STOMP (simple broker in-memory)<br/>• Apache POI dengan Guard Batch"]
             
             Postgres[("🐘 elearning-postgres<br/>PostgreSQL 16 Relational DB<br/>• Migrasi Otomatis Flyway<br/>• HikariCP Connection Pool")]
             
-            Redis[("⚡ elearning-redis<br/>Redis 7 In-Memory Cache<br/>• Broker Sesi & Telemetri CBT")]
+            Redis[("⚡ elearning-redis<br/>Redis 7<br/>• Penyimpanan refresh token<br/>• Rotasi & pencabutan per jti")]
             
             Storage[("📁 backend_storage<br/>Volume Docker Persisten<br/>• Direktori Upload (/app/storage/uploads)<br/>• Whitelist Ekstensi File Ketat")]
         end
@@ -159,11 +159,11 @@ graph TD
     Nginx -->|Aset Statis Web| Frontend
     Nginx -->|/api/ & /ws| Backend
     Backend -->|Kueri JDBC HikariCP| Postgres
-    Backend -->|Cache / STOMP PubSub| Redis
+    Backend -->|Refresh token| Redis
     Backend -->|I/O Berkas Aman| Storage
 ```
 
-### 🔒 Keamanan Enterprise & Kepatuhan Standar OWASP Top 10
+### 🔒 Keamanan & Pemetaan OWASP Top 10
 
 | Standar OWASP | Implementasi Mitigasi Keamanan pada Platform |
 |---|---|
@@ -182,14 +182,14 @@ graph TD
 
 ## 🏗️ Arsitektur Real-Time Telemetri & WebSocket
 
-Fitur monitoring ruang ujian CBT langsung memanfaatkan **Spring WebSocket dengan message broker STOMP** yang didukung Redis untuk memantau aktivitas kandidat secara instan tanpa perlu reload halaman.
+Fitur monitoring ruang ujian CBT langsung memanfaatkan **Spring WebSocket dengan STOMP** dan **simple broker in-memory** bawaan Spring untuk mengirim progres kandidat ke guru secara real-time tanpa reload halaman. Jawaban dan attempt disimpan ke PostgreSQL terlebih dahulu, baru event disiarkan. Migrasi ke broker relay Redis/RabbitMQ untuk deployment multi-instance ada di roadmap (lihat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-limits-and-roadmap)).
 
 ### Alur Pesan Real-Time
 
 ```
 ┌──────────────────┐       ┌──────────────────────┐       ┌─────────────────────┐       ┌──────────────────┐
-│  Kandidat Ujian  │──────▶│   Spring Controller  │──────▶│   Redis Cache /     │       │                  │
-│   di Runner CBT  │       │  /api/v1/exams/...   │       │   PostgreSQL DB     │       │   Spring STOMP   │
+│  Kandidat Ujian  │──────▶│   Spring Controller  │──────▶│   PostgreSQL        │       │                  │
+│   di Runner CBT  │       │  /api/v1/exams/...   │       │ (attempts, answers) │       │   Spring STOMP   │
 └──────────────────┘       └──────────┬───────────┘       └─────────────────────┘       │  Message Broker  │
                                       │                                                 │  (/ws/cbt)       │
                                       │  messagingTemplate.convertAndSend()             │                  │
@@ -323,17 +323,21 @@ npm run build
 ## 📂 Struktur Folder Proyek
 
 ```
-java-spring-react-elearning/
+spring-elearning-react/
 ├── backend/
 │   ├── src/main/java/com/elearning/
-│   │   ├── config/              # Konfigurasi Security, JWT, WebSocket, Redis, Swagger
-│   │   ├── common/              # Wrapper respon API, exceptions handler, paginasi
+│   │   ├── config/              # Filter chain Spring Security, konfigurasi WebSocket/STOMP
+│   │   ├── security/            # JWT provider & filter, penyimpanan refresh token, rate limiting
+│   │   ├── common/              # Base entity, wrapper respon API, exception handler
 │   │   └── modules/
-│   │       ├── academic/        # Modul Kelas, Mata Pelajaran, Pengumuman
-│   │       ├── user/            # Pengguna, Guru, Siswa, Impersonasi
-│   │       ├── learning/        # Materi Pembelajaran & Riwayat Pembaca
+│   │       ├── auth/            # Login, refresh, logout, ganti password, impersonasi
+│   │       ├── user/            # Pengguna, Guru, Siswa
+│   │       ├── academic/        # Kelas, Mata Pelajaran
+│   │       ├── announcement/    # Pengumuman
+│   │       ├── material/        # Materi Pembelajaran & Riwayat Pembaca
 │   │       ├── assignment/      # Tugas, Pengumpulan Tugas, Forum Diskusi
-│   │       └── exam/            # Ujian CBT, Bank Soal, Telemetri, Hasil Ujian
+│   │       ├── exam/            # Ujian CBT, Bank Soal, Attempt, Telemetri
+│   │       └── grade/           # Rekap nilai
 │   └── src/main/resources/
 │       ├── db/migration/        # Flyway migrasi skema SQL & seeder demo data
 │       └── application.yml      # Konfigurasi profil Spring Boot
@@ -347,6 +351,7 @@ java-spring-react-elearning/
 │   │   └── types/               # Tipe interface TypeScript & skema DTO
 │   ├── index.html               # Semantik HTML dengan metadata OpenGraph & JSON-LD
 │   └── vite.config.ts           # Konfigurasi Vite 6 dengan Tailwind CSS v4 native
+├── docs/ARCHITECTURE.md         # Model data, sequence diagram, keputusan desain, batas skalabilitas
 ├── screenshots/                 # Dokumentasi visual antarmuka sistem per peran
 └── docker-compose.yml           # Orkestrasi container Docker multi-service
 ```
