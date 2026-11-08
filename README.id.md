@@ -115,7 +115,8 @@ Daftar Ujian → Konfirmasi & Panduan → Ruang Ujian CBT Aman
 | **Backend Core** | Java 21 LTS, Spring Boot 3.5.7 |
 | **Keamanan & Auth** | Spring Security 6, JJWT 0.12.6, Method Security (`@PreAuthorize`), Impersonation Engine |
 | **Basis Data** | PostgreSQL 16, Spring Data JPA, Hibernate 6, HikariCP, Flyway Migrations |
-| **Token Store & Realtime** | Redis 7 (rotasi & pencabutan refresh token), Spring WebSocket + STOMP (simple broker in-memory), SockJS |
+| **Token Store & Realtime** | Redis 7 (rotasi refresh token, opsional rate limit bersama dan event lintas instance), Spring WebSocket + STOMP (simple broker in-memory), SockJS |
+| **Penyimpanan File** | Docker volume lokal atau object storage kompatibel S3 (AWS S3, MinIO) |
 | **Pemrosesan Berkas** | Apache POI (Parsing batch Excel `.xlsx` untuk Siswa & Bank Soal) |
 | **Dokumentasi API** | Springdoc OpenAPI 3 / Swagger UI (`/swagger-ui/index.html`) |
 | **Frontend Core** | React 19, TypeScript 5+, Vite 6 |
@@ -368,7 +369,10 @@ Untuk menerapkan ke server production:
 5. Masukkan domain publik ke `APP_CORS_ALLOWED_ORIGINS` (dipakai juga sebagai origin WebSocket yang diizinkan).
 6. Akun default wajib ganti password saat login pertama. Set `APP_DEMO_MODE=true` **hanya** untuk instance demo publik dengan akun demo bersama.
 7. Biarkan `SPRINGDOC_ENABLED=false` dan `APP_REGISTRATION_ENABLED=false` kecuali memang dibutuhkan.
-8. **IP asli klien / rate limiting:** backend hanya mempercayai `X-Forwarded-For` dari proxy internal (jaringan Docker). Jika situs berada di belakang Cloudflare, pulihkan IP pengunjung di Nginx host, jika tidak semua user akan berbagi IP Cloudflare untuk rate limit:
+8. Refresh token disimpan di cookie httpOnly `Secure`, jadi aplikasi harus diakses lewat HTTPS. Set `APP_REFRESH_COOKIE_SECURE=false` hanya untuk menjalankan lokal tanpa HTTPS (`docker-compose.yml` lokal sudah mengaturnya).
+9. SPA mengirim header Content-Security-Policy. Jika memakai analytics, izinkan host-nya di container frontend, misalnya `CSP_SCRIPT_SRC_EXTRA="https://www.googletagmanager.com"` dan `CSP_CONNECT_SRC_EXTRA="https://*.google-analytics.com"`.
+10. **Beberapa instance backend:** set `APP_REALTIME_MODE=redis`, `APP_RATE_LIMIT_STORE=redis`, dan `APP_STORAGE_TYPE=s3` dengan `APP_STORAGE_S3_BUCKET` (ditambah `APP_STORAGE_S3_ENDPOINT` dan `APP_STORAGE_S3_PATH_STYLE=true` untuk MinIO), lalu aktifkan sticky session untuk `/ws`. Detail ada di [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-limits-and-roadmap).
+11. **IP asli klien / rate limiting:** backend hanya mempercayai `X-Forwarded-For` dari proxy internal (jaringan Docker). Jika situs berada di belakang Cloudflare, pulihkan IP pengunjung di Nginx host, jika tidak semua user akan berbagi IP Cloudflare untuk rate limit:
    ```nginx
    # blok http {} di nginx host — samakan daftarnya dengan https://www.cloudflare.com/ips/
    set_real_ip_from 173.245.48.0/20;   # ...tambahkan semua range IPv4/IPv6 Cloudflare

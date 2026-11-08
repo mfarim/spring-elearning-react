@@ -74,3 +74,20 @@ jobs:
 
       - name: Build and Package with Maven
         run: ./mvnw clean package
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          if [ -f target/site/jacoco/jacoco.csv ]; then
+            awk -F, 'NR > 1 { missed += $8; covered += $9 }
+              END { total = missed + covered; if (total > 0) printf "### Backend line coverage: %.1f%% (%d of %d lines)\n", 100 * covered / total, covered, total }' \
+              target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/target/site/jacoco
+          if-no-files-found: ignore
