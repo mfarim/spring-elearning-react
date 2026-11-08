@@ -22,7 +22,21 @@
 		<bucket4j.version>8.10.1</bucket4j.version>
 		<!-- CVE-2025-48924 (uncontrolled recursion in ClassUtils), pulled in transitively -->
 		<commons-lang3.version>3.18.0</commons-lang3.version>
+		<!-- S3-compatible object storage (optional, app.storage.type=s3) -->
+		<awssdk.version>2.29.0</awssdk.version>
+		<jacoco.version>0.8.12</jacoco.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<!-- Core Web & Security -->
@@ -109,6 +123,18 @@
 			<artifactId>caffeine</artifactId>
 		</dependency>
 
+		<!-- S3 / MinIO storage for multi-instance deployments; the sync client uses the Apache HTTP client,
+		     so the async Netty client is excluded to keep the jar small. -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>netty-nio-client</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<!-- Apache POI for Excel Import/Export -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
@@ -149,6 +175,27 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<!-- Test coverage report: target/site/jacoco/index.html (uploaded by CI) -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
