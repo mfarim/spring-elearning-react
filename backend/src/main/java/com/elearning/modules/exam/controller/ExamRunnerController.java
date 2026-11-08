@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +32,15 @@ public class ExamRunnerController {
     public ResponseEntity<ApiResponse<ExamStartResponse>> startExam(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        ExamStartResponse response = examRunnerService.startOrResumeAttempt(id, principal);
+        ExamStartResponse response;
+        try {
+            response = examRunnerService.startOrResumeAttempt(id, principal);
+        } catch (DataIntegrityViolationException e) {
+            // Two "start" requests raced (double click, two tabs) and the unique key on
+            // (exam, student, attempt_number) rejected the second insert. The first attempt now exists,
+            // so retrying once simply resumes it.
+            response = examRunnerService.startOrResumeAttempt(id, principal);
+        }
         return ResponseEntity.ok(ApiResponse.success(response, "Exam session started"));
     }
 

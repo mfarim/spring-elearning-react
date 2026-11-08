@@ -2,8 +2,10 @@ package com.elearning.common.exception;
 
 import com.elearning.common.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -73,6 +75,21 @@ public class GlobalExceptionHandler {
         // Business-rule violations (exam not started, deadline passed, ...) are client errors, not 500s.
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
+        // Another request changed the same record first (e.g. submit vs. the expiry job).
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("The data was updated by another request. Please reload and try again."));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        // Unique or foreign-key constraint violated; do not leak SQL details to the client.
+        log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("The request conflicts with existing data."));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
