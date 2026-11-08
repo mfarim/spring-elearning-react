@@ -13,7 +13,7 @@
 >
 > 🐘 **Looking for the Laravel & Livewire edition?** A companion monolithic edition built with **Laravel 13, Livewire 3, and Laravel Reverb** is available at: [https://github.com/mfarim/laravel-elearning](https://github.com/mfarim/laravel-elearning)
 
-A full-featured enterprise web-based **E-Learning** and **Computer Based Test (CBT)** platform for managing modern academic learning activities between **Admin**, **Teacher**, and **Student**. Built with a decoupled cloud-ready architecture: **Java 21 LTS, Spring Boot 3.5+, React 19, and Tailwind CSS v4**, featuring stateless JWT authentication with impersonation, Redis cache, WebSocket STOMP real-time candidate proctoring, and Apache POI Excel batch processing.
+A full-featured web-based **E-Learning** and **Computer Based Test (CBT)** platform for managing modern academic learning activities between **Admin**, **Teacher**, and **Student**. Built as a containerized modular monolith with a decoupled SPA frontend: **Java 21 LTS, Spring Boot 3.5+, React 19, and Tailwind CSS v4**, featuring stateless JWT authentication with Redis-backed refresh-token rotation and impersonation, WebSocket STOMP real-time candidate proctoring, and Apache POI Excel batch processing.
 
 ---
 
@@ -115,20 +115,20 @@ Exam List → Confirmation & Instructions → Secure Exam Runner
 | **Backend Core** | Java 21 LTS, Spring Boot 3.5.7 |
 | **Security & Auth** | Spring Security 6, JJWT 0.12.6, Method Security (`@PreAuthorize`), Impersonation Engine |
 | **Persistence** | PostgreSQL 16, Spring Data JPA, Hibernate 6, HikariCP, Flyway Migrations |
-| **Cache & Realtime** | Redis 7, Spring WebSocket + STOMP Message Broker, SockJS |
+| **Token Store & Realtime** | Redis 7 (refresh-token rotation & revocation), Spring WebSocket + STOMP (in-memory simple broker), SockJS |
 | **Batch Processing** | Apache POI (Excel `.xlsx` batch parsing for Students & Question Banks) |
 | **API Documentation** | Springdoc OpenAPI 3 / Swagger UI (`/swagger-ui/index.html`) |
 | **Frontend Core** | React 19, TypeScript 5+, Vite 6 |
 | **Styling** | Tailwind CSS v4 (Native CSS engine with `@tailwindcss/vite`) |
 | **State Management** | Zustand 5, Axios with JWT interceptors |
 | **Icons & UI** | Lucide React |
-| **Deployment** | Docker Compose, Multi-stage Dockerfiles (OpenJDK 21 Alpine & Node 20 Alpine) |
+| **Deployment** | Docker Compose, Multi-stage Dockerfiles (OpenJDK 21 Alpine & Node 22 Alpine), Nginx 1.28 |
 
 ---
 
 ## 🏛️ High-Level System Architecture
 
-The platform is designed with a defense-in-depth, decoupled micro-architecture ready for containerized VPS and cloud deployments behind Cloudflare:
+The platform is a **modular monolith** (one Spring Boot service split into domain modules) with a separate React SPA, deployed as Docker containers on a VPS behind Cloudflare, with defense-in-depth at every layer. Data model, request flows, design decisions, and scaling limits are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```mermaid
 graph TD
@@ -144,11 +144,11 @@ graph TD
         subgraph DockerNet ["Docker Network (elearning-network)"]
             Frontend["📦 elearning-frontend<br/>React 19 SPA + Vite + Tailwind v4"]
             
-            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.5.7<br/>• Spring Security 6 (Stateless JWT)<br/>• Bucket4j Login Rate Limiting (A07)<br/>• STOMP WebSocket Message Broker<br/>• Apache POI with Batch Guards"]
+            Backend["☕ elearning-backend<br/>Java 21 LTS + Spring Boot 3.5.7<br/>• Spring Security 6 (Stateless JWT)<br/>• Bucket4j Login Rate Limiting (A07)<br/>• STOMP WebSocket (in-memory simple broker)<br/>• Apache POI with Batch Guards"]
             
             Postgres[("🐘 elearning-postgres<br/>PostgreSQL 16 Relational DB<br/>• Flyway Automated Migrations<br/>• HikariCP Connection Pool")]
             
-            Redis[("⚡ elearning-redis<br/>Redis 7 In-Memory Cache<br/>• Session & Telemetry Broker")]
+            Redis[("⚡ elearning-redis<br/>Redis 7<br/>• Refresh-token store<br/>• Rotation & revocation by jti")]
             
             Storage[("📁 backend_storage<br/>Persistent Docker Volume<br/>• Uploads (/app/storage/uploads)<br/>• File Extension Whitelisting")]
         end
@@ -159,11 +159,11 @@ graph TD
     Nginx -->|Static Assets| Frontend
     Nginx -->|/api/ & /ws| Backend
     Backend -->|HikariCP / JPA| Postgres
-    Backend -->|Cache / STOMP PubSub| Redis
+    Backend -->|Refresh tokens| Redis
     Backend -->|Safe File I/O| Storage
 ```
 
-### 🔒 Enterprise Security & OWASP Top 10 Compliance
+### 🔒 Security & OWASP Top 10 Mapping
 
 | OWASP Standard | Mitigation in this Platform |
 |---|---|
@@ -182,14 +182,14 @@ graph TD
 
 ## 🏗️ Real-Time Telemetry & WebSocket Architecture
 
-The live examination monitoring feature uses **Spring WebSocket with STOMP message broker** backed by Redis to monitor candidate progress in real time.
+The live examination monitoring feature uses **Spring WebSocket with STOMP** and Spring's **in-memory simple broker** to push candidate progress to the teacher in real time. Answers and attempts are persisted in PostgreSQL first, then an event is broadcast. Moving to a Redis/RabbitMQ broker relay for multi-instance deployments is on the roadmap (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-limits-and-roadmap)).
 
 ### Message Flow
 
 ```
 ┌─────────────────┐       ┌──────────────────────┐       ┌─────────────────────┐       ┌──────────────────┐
-│  Candidate in   │──────▶│   Spring Controller  │──────▶│   Redis Cache /     │       │                  │
-│  Exam Runner    │       │  /api/v1/exams/...   │       │   PostgreSQL DB     │       │   Spring STOMP   │
+│  Candidate in   │──────▶│   Spring Controller  │──────▶│   PostgreSQL        │       │                  │
+│  Exam Runner    │       │  /api/v1/exams/...   │       │ (attempts, answers) │       │   Spring STOMP   │
 └─────────────────┘       └──────────┬───────────┘       └─────────────────────┘       │  Message Broker  │
                                      │                                                 │  (/ws/cbt)       │
                                      │  messagingTemplate.convertAndSend()             │                  │
@@ -324,17 +324,21 @@ npm run build
 ## 📂 Project Structure
 
 ```
-java-spring-react-elearning/
+spring-elearning-react/
 ├── backend/
 │   ├── src/main/java/com/elearning/
-│   │   ├── config/              # Security, JWT, WebSocket, Redis, Swagger configs
-│   │   ├── common/              # Response wrappers, exceptions, pagination utilities
+│   │   ├── config/              # Spring Security filter chain, WebSocket/STOMP config
+│   │   ├── security/            # JWT provider & filter, refresh-token store, rate limiting
+│   │   ├── common/              # Base entity, response wrappers, exception handler
 │   │   └── modules/
-│   │       ├── academic/        # Classrooms, Subjects, Announcements
-│   │       ├── user/            # Users, Teachers, Students, Impersonation
-│   │       ├── learning/        # Learning Materials & Material Views
+│   │       ├── auth/            # Login, refresh, logout, password change, impersonation
+│   │       ├── user/            # Users, Teachers, Students
+│   │       ├── academic/        # Classrooms, Subjects
+│   │       ├── announcement/    # Announcements
+│   │       ├── material/        # Learning Materials & Material Views
 │   │       ├── assignment/      # Assignments, Submissions, Discussions
-│   │       └── exam/            # CBT Exams, Question Bank, Telemetry, Attempts
+│   │       ├── exam/            # CBT Exams, Question Bank, Attempts, Telemetry
+│   │       └── grade/           # Grade summaries
 │   └── src/main/resources/
 │       ├── db/migration/        # Flyway SQL schema migrations & seeders
 │       └── application.yml      # Spring Boot profile configurations
@@ -348,6 +352,7 @@ java-spring-react-elearning/
 │   │   └── types/               # TypeScript interfaces & DTO schemas
 │   ├── index.html               # Semantic HTML with complete OpenGraph & JSON-LD SEO
 │   └── vite.config.ts           # Vite 6 config with Tailwind CSS v4 native plugin
+├── docs/ARCHITECTURE.md         # Data model, sequence diagrams, design decisions, scaling limits
 ├── screenshots/                 # Application showcase captures across roles
 └── docker-compose.yml           # Multi-container orchestration definition
 ```
