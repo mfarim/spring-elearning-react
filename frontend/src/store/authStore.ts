@@ -25,19 +25,20 @@ const toUser = (data: AuthResponse): User => ({
   mustChangePassword: !!data.mustChangePassword,
 });
 
+// Only the short-lived access token and the profile are kept in localStorage.
+// The refresh token is set by the backend as an httpOnly cookie and never touches JavaScript.
 const persistSession = (data: AuthResponse, user: User) => {
   localStorage.setItem('token', data.accessToken);
-  if (data.refreshToken) {
-    localStorage.setItem('refreshToken', data.refreshToken);
-  }
   localStorage.setItem('user', JSON.stringify(user));
 };
 
 const clearSession = () => {
   localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
 };
+
+// Older builds stored the refresh token in localStorage; remove it so it cannot be stolen.
+const removeLegacyRefreshToken = () => localStorage.removeItem('refreshToken');
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -46,6 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   initAuth: () => {
+    removeLegacyRefreshToken();
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
 
@@ -54,9 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         const user = JSON.parse(userStr);
         set({ user, token, isAuthenticated: true, isLoading: false });
       } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        clearSession();
         set({ user: null, token: null, isAuthenticated: false, isLoading: false });
       }
     } else {
@@ -80,17 +80,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    // Revoke the refresh token server-side (best effort), then drop the local session.
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      // keepalive lets the request finish even though we navigate away right after.
-      fetch('/api/v1/auth/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-        keepalive: true,
-      }).catch(() => undefined);
-    }
+    // Revoke the refresh token server-side and clear its cookie (best effort), then drop the local session.
+    // The httpOnly cookie is sent automatically; keepalive lets the request finish while we navigate away.
+    fetch('/api/v1/auth/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+      keepalive: true,
+    }).catch(() => undefined);
     clearSession();
     set({ user: null, token: null, isAuthenticated: false });
     window.location.href = '/login';
