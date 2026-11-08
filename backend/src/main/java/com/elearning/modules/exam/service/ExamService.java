@@ -410,7 +410,7 @@ public class ExamService {
         Long currentAttemptId = null;
 
         if (studentId != null) {
-            Optional<ExamAttempt> attempt = attemptRepository.findByExaminationIdAndStudentId(e.getId(), studentId);
+            Optional<ExamAttempt> attempt = attemptRepository.findFirstByExaminationIdAndStudentIdOrderByAttemptNumberDesc(e.getId(), studentId);
             if (attempt.isPresent()) {
                 ExamAttempt att = attempt.get();
                 attemptStatus = att.getStatus().name();

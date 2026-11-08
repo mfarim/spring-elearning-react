@@ -68,10 +68,9 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+      // No session at all: nothing to refresh. The refresh token itself lives in an httpOnly cookie
+      // that JavaScript cannot read, so the access token tells us whether the user was logged in.
+      if (!localStorage.getItem('token')) {
         localStorage.removeItem('user');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
@@ -94,19 +93,14 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await axios.post('/api/v1/auth/refresh', {
-          refreshToken,
-        });
+        // The browser sends the httpOnly refresh cookie (path /api/v1/auth) and stores the rotated one.
+        const response = await axios.post('/api/v1/auth/refresh', null, { withCredentials: true });
 
         const data = response.data?.data;
         const newAccessToken = data?.accessToken;
-        const newRefreshToken = data?.refreshToken;
 
         if (newAccessToken) {
           localStorage.setItem('token', newAccessToken);
-          if (newRefreshToken) {
-            localStorage.setItem('refreshToken', newRefreshToken);
-          }
 
           api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
           processQueue(null, newAccessToken);
@@ -119,7 +113,6 @@ api.interceptors.response.use(
       } catch (refreshErr) {
         processQueue(refreshErr, null);
         localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';

@@ -1,8 +1,8 @@
 package com.elearning.modules.exam.service;
 
 import com.elearning.common.enums.AttemptStatus;
-import com.elearning.common.enums.QuestionType;
 import com.elearning.common.enums.Status;
+import com.elearning.common.exception.AttemptExpiredException;
 import com.elearning.modules.exam.dto.*;
 import com.elearning.modules.exam.entity.ExamAnswer;
 import com.elearning.modules.exam.entity.ExamAttempt;
@@ -38,7 +38,13 @@ public class ExamRunnerService {
     private final StudentRepository studentRepository;
     private final ExamRealtimeService realtimeService;
 
-    @Transactional
+    /** Attempt states after which no more answers are accepted. */
+    private static final Set<AttemptStatus> FINISHED_STATUSES = EnumSet.of(
+            AttemptStatus.completed, AttemptStatus.submitted, AttemptStatus.needs_grading, AttemptStatus.force_finished);
+
+    // noRollbackFor: when the time has run out, the attempt is finalized and that result must be
+    // committed even though the request is rejected with AttemptExpiredException.
+    @Transactional(noRollbackFor = AttemptExpiredException.class)
     public ExamStartResponse startOrResumeAttempt(Long examId, UserPrincipal principal) {
         Student student = studentRepository.findByUserId(principal.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Student profile not found"));
@@ -62,27 +68,27 @@ public class ExamRunnerService {
             throw new AccessDeniedException("This exam is not assigned to your classroom");
         }
 
-        Optional<ExamAttempt> existingAttemptOpt = attemptRepository.findByExaminationIdAndStudentId(examId, student.getId());
+        // Exams with retries can have several attempts; always continue from the latest one.
+        Optional<ExamAttempt> latestAttemptOpt = attemptRepository
+                .findFirstByExaminationIdAndStudentIdOrderByAttemptNumberDesc(examId, student.getId());
         ExamAttempt attempt;
 
-        if (existingAttemptOpt.isPresent()) {
-            attempt = existingAttemptOpt.get();
-            if (attempt.getStatus() == AttemptStatus.completed || attempt.getStatus() == AttemptStatus.submitted) {
-                if (!exam.isAllowRetry()) {
-                    throw new IllegalStateException("Exam already completed. Retries are not permitted.");
-                } else {
-                    attempt = createNewAttempt(exam, student, attempt.getAttemptNumber() + 1);
-                }
-            }
-        } else {
+        if (latestAttemptOpt.isEmpty()) {
             attempt = createNewAttempt(exam, student, 1);
+        } else if (FINISHED_STATUSES.contains(latestAttemptOpt.get().getStatus())) {
+            if (!exam.isAllowRetry()) {
+                throw new IllegalStateException("Exam already completed. Retries are not permitted.");
+            }
+            attempt = createNewAttempt(exam, student, latestAttemptOpt.get().getAttemptNumber() + 1);
+        } else {
+            attempt = latestAttemptOpt.get();
         }
 
         // Calculate remaining seconds
         long remainingSeconds = calculateRemainingSeconds(exam, attempt, now);
         if (remainingSeconds <= 0 && attempt.getStatus() == AttemptStatus.in_progress) {
             autoFinalizeAttempt(attempt, exam);
-            throw new IllegalStateException("Exam duration has expired");
+            throw new AttemptExpiredException("Exam duration has expired");
         }
 
         // Fetch questions and existing answers
@@ -140,7 +146,7 @@ public class ExamRunnerService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AttemptExpiredException.class)
     public void saveAnswer(Long attemptId, SubmitAnswerRequest req, UserPrincipal principal) {
         ExamAttempt attempt = getValidatedStudentAttempt(attemptId, principal);
 
@@ -151,7 +157,7 @@ public class ExamRunnerService {
         long remaining = calculateRemainingSeconds(attempt.getExamination(), attempt, LocalDateTime.now());
         if (remaining <= 0) {
             autoFinalizeAttempt(attempt, attempt.getExamination());
-            throw new IllegalStateException("Exam duration has expired. Attempt automatically submitted.");
+            throw new AttemptExpiredException("Exam duration has expired. Attempt automatically submitted.");
         }
 
         Question question = questionRepository.findById(req.getQuestionId())
@@ -172,7 +178,7 @@ public class ExamRunnerService {
         answer.setAnsweredAt(LocalDateTime.now());
         answerRepository.save(answer);
 
-        int answeredCount = answerRepository.findByExamAttemptId(attempt.getId()).size();
+        long answeredCount = answerRepository.countByExamAttemptId(attempt.getId());
         realtimeService.broadcastExamEvent(attempt.getExamination().getId(), "ANSWER_SAVED", Map.of(
                 "attemptId", attempt.getId(),
                 "studentId", attempt.getStudent().getId(),
@@ -220,56 +226,53 @@ public class ExamRunnerService {
 
     @Transactional
     public ExamAttempt autoFinalizeAttempt(ExamAttempt attempt, Examination exam) {
-        List<Question> questions = questionRepository.findByExaminationIdOrderByIdAsc(exam.getId());
-        List<ExamAnswer> answers = answerRepository.findByExamAttemptId(attempt.getId());
+        if (attempt.getStatus() != AttemptStatus.in_progress) {
+            // Already finalized, e.g. by the background job or a parallel submit.
+            return attempt;
+        }
 
-        Map<Long, ExamAnswer> answersByQuestionId = answers.stream()
+        List<Question> questions = questionRepository.findByExaminationIdOrderByIdAsc(exam.getId());
+        Map<Long, ExamAnswer> answersByQuestionId = answerRepository.findByExamAttemptId(attempt.getId()).stream()
                 .collect(Collectors.toMap(a -> a.getQuestion().getId(), a -> a, (a1, a2) -> a1));
 
         int totalPossiblePoints = 0;
         int totalEarnedPoints = 0;
-        boolean hasEssay = false;
+        boolean needsManualGrading = false;
 
         for (Question q : questions) {
-            int qPoints = q.getPoints() != null ? q.getPoints() : 1;
+            int qPoints = pointsOf(q);
             totalPossiblePoints += qPoints;
 
             ExamAnswer ans = answersByQuestionId.get(q.getId());
-            if (ans == null) {
-                ans = ExamAnswer.builder()
-                        .examAttempt(attempt)
-                        .question(q)
-                        .answerText(null)
-                        .pointsEarned(0)
-                        .correct(false)
-                        .build();
+            if (ans == null || ans.getAnswerText() == null || ans.getAnswerText().isBlank()) {
+                // Unanswered: zero points and nothing left for the teacher to grade.
+                if (ans == null) {
+                    ans = ExamAnswer.builder().examAttempt(attempt).question(q).build();
+                }
+                ans.setPointsEarned(0);
+                ans.setCorrect(false);
                 answerRepository.save(ans);
                 continue;
             }
 
-            if (q.getQuestionType() == QuestionType.multiple_choice || q.getQuestionType() == QuestionType.true_false) {
-                boolean isCorrect = ans.getAnswerText() != null &&
-                        q.getCorrectAnswer() != null &&
-                        ans.getAnswerText().trim().equalsIgnoreCase(q.getCorrectAnswer().trim());
-
+            if (AnswerGrader.isAutoGraded(q.getQuestionType(), q.getCorrectAnswer())) {
+                boolean isCorrect = AnswerGrader.isCorrect(q.getQuestionType(), ans.getAnswerText(), q.getCorrectAnswer());
                 ans.setCorrect(isCorrect);
                 ans.setPointsEarned(isCorrect ? qPoints : 0);
-                if (isCorrect) {
-                    totalEarnedPoints += qPoints;
-                }
-                answerRepository.save(ans);
-            } else if (q.getQuestionType() == QuestionType.essay) {
-                hasEssay = true;
+                totalEarnedPoints += ans.getPointsEarned();
+            } else {
+                // Essays and short answers without a key wait for the teacher; correct == null marks them as pending.
+                needsManualGrading = true;
                 ans.setCorrect(null);
                 ans.setPointsEarned(0);
-                answerRepository.save(ans);
             }
+            answerRepository.save(ans);
         }
 
-        int score = totalPossiblePoints > 0 ? (totalEarnedPoints * 100) / totalPossiblePoints : 0;
+        int score = AnswerGrader.scorePercent(totalEarnedPoints, totalPossiblePoints);
         attempt.setScore(score);
         attempt.setPassed(score >= exam.getPassingScore());
-        attempt.setStatus(hasEssay ? AttemptStatus.needs_grading : AttemptStatus.completed);
+        attempt.setStatus(needsManualGrading ? AttemptStatus.needs_grading : AttemptStatus.completed);
         attempt.setFinishedAt(LocalDateTime.now());
 
         ExamAttempt savedAttempt = attemptRepository.save(attempt);
@@ -298,10 +301,14 @@ public class ExamRunnerService {
         if (!answer.getExamAttempt().getId().equals(attempt.getId())) {
             throw new IllegalArgumentException("Answer does not belong to this attempt");
         }
-        if (answer.getQuestion().getQuestionType() != QuestionType.essay) {
-            throw new IllegalArgumentException("Only essay answers can be graded manually");
+        if (attempt.getStatus() == AttemptStatus.in_progress) {
+            throw new IllegalStateException("The attempt is still in progress");
         }
-        int maxPoints = answer.getQuestion().getPoints() != null ? answer.getQuestion().getPoints() : 1;
+        Question question = answer.getQuestion();
+        if (AnswerGrader.isAutoGraded(question.getQuestionType(), question.getCorrectAnswer())) {
+            throw new IllegalArgumentException("Only essays and short answers without an answer key can be graded manually");
+        }
+        int maxPoints = pointsOf(question);
         if (dto.getPointsEarned() < 0 || dto.getPointsEarned() > maxPoints) {
             throw new IllegalArgumentException("Points must be between 0 and " + maxPoints);
         }
@@ -314,14 +321,35 @@ public class ExamRunnerService {
         List<Question> questions = questionRepository.findByExaminationIdOrderByIdAsc(attempt.getExamination().getId());
         List<ExamAnswer> answers = answerRepository.findByExamAttemptId(attempt.getId());
 
-        int totalPossible = questions.stream().mapToInt(q -> q.getPoints() != null ? q.getPoints() : 1).sum();
-        int totalEarned = answers.stream().mapToInt(ExamAnswer::getPointsEarned).sum();
+        int totalPossible = questions.stream().mapToInt(ExamRunnerService::pointsOf).sum();
+        int totalEarned = answers.stream().mapToInt(a -> a.getPointsEarned() != null ? a.getPointsEarned() : 0).sum();
+        // The attempt is only complete once every manually graded answer has a grade.
+        boolean stillPending = answers.stream().anyMatch(a -> a.getCorrect() == null);
 
-        int score = totalPossible > 0 ? (totalEarned * 100) / totalPossible : 0;
+        int score = AnswerGrader.scorePercent(totalEarned, totalPossible);
         attempt.setScore(score);
         attempt.setPassed(score >= attempt.getExamination().getPassingScore());
-        attempt.setStatus(AttemptStatus.completed);
+        attempt.setStatus(stillPending ? AttemptStatus.needs_grading : AttemptStatus.completed);
         attemptRepository.save(attempt);
+    }
+
+    /**
+     * Finalizes the attempt if it is still in progress and its deadline has passed.
+     * Called by {@link ExpiredAttemptFinalizer}; each call runs in its own transaction.
+     *
+     * @return true if the attempt was finalized by this call
+     */
+    @Transactional
+    public boolean finalizeIfExpired(Long attemptId) {
+        return attemptRepository.findById(attemptId)
+                .filter(a -> a.getStatus() == AttemptStatus.in_progress)
+                .filter(a -> calculateRemainingSeconds(a.getExamination(), a, LocalDateTime.now()) <= 0)
+                .map(a -> {
+                    autoFinalizeAttempt(a, a.getExamination());
+                    log.info("Auto-finalized expired exam attempt {}", attemptId);
+                    return true;
+                })
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)
@@ -334,7 +362,7 @@ public class ExamRunnerService {
         List<ExamAttempt> attempts = attemptRepository.findByExaminationId(examId);
 
         return attempts.stream().map(att -> {
-            int answeredCount = answerRepository.findByExamAttemptId(att.getId()).size();
+            int answeredCount = (int) answerRepository.countByExamAttemptId(att.getId());
             return ExamMonitorResponse.builder()
                     .attemptId(att.getId())
                     .studentId(att.getStudent().getId())
@@ -362,6 +390,10 @@ public class ExamRunnerService {
                 .startedAt(LocalDateTime.now())
                 .build();
         return attemptRepository.save(attempt);
+    }
+
+    private static int pointsOf(Question question) {
+        return question.getPoints() != null ? question.getPoints() : 1;
     }
 
     private long calculateRemainingSeconds(Examination exam, ExamAttempt attempt, LocalDateTime now) {

@@ -62,8 +62,36 @@ app:
     demo-mode: ${APP_DEMO_MODE:false}
     # public self-registration (POST /api/v1/auth/register); accounts are normally created by admins
     registration-enabled: ${APP_REGISTRATION_ENABLED:false}
+    refresh-cookie:
+      # httpOnly cookie that carries the refresh token. Keep secure=true behind HTTPS; set
+      # APP_REFRESH_COOKIE_SECURE=false only for plain-HTTP local development (e.g. Safari on localhost).
+      secure: ${APP_REFRESH_COOKIE_SECURE:true}
+      same-site: ${APP_REFRESH_COOKIE_SAME_SITE:Strict}
   storage:
+    # local = Docker volume (one instance); s3 = AWS S3 / MinIO (needed for several instances)
+    type: ${APP_STORAGE_TYPE:local}
     upload-dir: ${STORAGE_UPLOAD_DIR:./storage/uploads}
+    s3:
+      bucket: ${APP_STORAGE_S3_BUCKET:}
+      region: ${APP_STORAGE_S3_REGION:us-east-1}
+      # empty for AWS; e.g. http://minio:9000 for MinIO (then also set path-style=true)
+      endpoint: ${APP_STORAGE_S3_ENDPOINT:}
+      # empty = default AWS credential chain (env vars, instance role)
+      access-key: ${APP_STORAGE_S3_ACCESS_KEY:}
+      secret-key: ${APP_STORAGE_S3_SECRET_KEY:}
+      path-style: ${APP_STORAGE_S3_PATH_STYLE:false}
+  rate-limit:
+    # memory = per instance; redis = shared by all instances
+    store: ${APP_RATE_LIMIT_STORE:memory}
+  realtime:
+    # local = in-memory STOMP broker of this instance; redis = relay exam events to every instance
+    mode: ${APP_REALTIME_MODE:local}
+  exam:
+    finalizer:
+      # Background job that submits attempts whose time ran out while the student was away.
+      enabled: ${APP_EXAM_FINALIZER_ENABLED:true}
+      interval-ms: ${APP_EXAM_FINALIZER_INTERVAL_MS:60000}
+      initial-delay-ms: 30000
 
 springdoc:
   api-docs:

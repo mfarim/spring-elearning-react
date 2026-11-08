@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/files")
@@ -51,10 +50,8 @@ public class FileController {
 
         Resource resource = fileStorageService.loadFileAsResource(filePath);
 
-        String contentType = null;
-        try {
-            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-        } catch (IOException ignored) {}
+        // Derived from the stored file name, so it works for every storage backend (disk or S3).
+        String contentType = request.getServletContext().getMimeType(filePath);
 
         if (contentType == null || contentType.contains("html") || contentType.contains("svg") || contentType.contains("javascript")) {
             contentType = "application/octet-stream";

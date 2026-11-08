@@ -12,8 +12,8 @@ export interface User {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
-  tokenType: string;
+  // The refresh token is never exposed to JavaScript: the backend keeps it in an httpOnly cookie.
+  tokenType?: string;
   userId: number;
   name: string;
   email: string;

@@ -36,10 +36,10 @@ flowchart LR
 | --- | --- |
 | Cloudflare | TLS termination, WAF, DDoS protection, forwards `CF-Connecting-IP` |
 | Host Nginx | Restores the real client IP, adds security headers, blocks Actuator, routes `/api` and `/ws` to the backend |
-| Spring Boot | REST API, JWT security, business rules, STOMP broker (in-memory), Excel import, file I/O |
+| Spring Boot | REST API, JWT security, business rules, STOMP broker (in-memory), expired-attempt job, Excel import, file I/O |
 | PostgreSQL | All business data; schema owned by Flyway migrations |
-| Redis | Refresh-token registry only (rotation, logout, revoke-all) |
-| Docker volume | Uploaded materials and assignment files |
+| Redis | Refresh-token registry (rotation, logout, revoke-all); optionally shared rate-limit counters and cross-instance exam events |
+| Docker volume or S3 | Uploaded materials and assignment files (`app.storage.type=local` or `s3` for AWS S3 / MinIO) |
 
 ---
 
@@ -125,6 +125,7 @@ erDiagram
         string status
         timestamp started_at
         timestamp finished_at
+        bigint version "optimistic lock"
     }
     EXAM_ANSWERS {
         bigint id PK
@@ -137,6 +138,7 @@ erDiagram
 Integrity rules enforced by the database:
 
 - `UNIQUE (exam_attempt_id, question_id)`: one answer row per question per attempt, so auto-save is an upsert.
+- `UNIQUE (examination_id, student_id, attempt_number)` (V3): concurrent "start" requests cannot create duplicate attempts.
 - `UNIQUE (assignment_id, student_id)` and `UNIQUE (learning_material_id, student_id)`: one submission and one view record per student.
 - `CHECK` constraints on every status and type column, plus `ON DELETE CASCADE` / `SET NULL` chosen per relation.
 - Soft delete (`deleted_at`) on content tables such as exams, questions, and announcements.
@@ -145,7 +147,7 @@ Integrity rules enforced by the database:
 
 ## Authentication and token rotation
 
-Access tokens are short-lived (15 minutes) and stateless. Refresh tokens last 7 days, but each one is registered in Redis by its `jti` and can be used **exactly once**.
+Access tokens are short-lived (15 minutes) and stateless. Refresh tokens last 7 days, are registered in Redis by their `jti`, can be used **exactly once**, and are never visible to JavaScript: the backend sets them as an httpOnly cookie that only the auth endpoints receive.
 
 ```mermaid
 sequenceDiagram
@@ -159,7 +161,7 @@ sequenceDiagram
     API->>API: Rate limit per IP and per email (5/min)
     API->>DB: Load user, verify BCrypt hash
     API->>R: SET auth:refresh:{jti} = userId (TTL 7d)
-    API-->>B: accessToken (15 min) + refreshToken
+    API-->>B: accessToken in body + Set-Cookie refresh_token (httpOnly, Secure, SameSite=Strict, Path=/api/v1/auth)
 
     B->>API: GET /api/v1/... (Bearer accessToken)
     API-->>B: 200 OK
@@ -167,12 +169,12 @@ sequenceDiagram
     Note over B,API: Access token expires
     B->>API: Request with expired token
     API-->>B: 401 Unauthorized
-    B->>API: POST /api/v1/auth/refresh (refreshToken)
+    B->>API: POST /api/v1/auth/refresh (cookie sent by the browser)
     API->>R: GETDEL auth:refresh:{jti}
     alt jti found and owned by user
         API->>DB: Check user still active
         API->>R: SET new jti (TTL 7d)
-        API-->>B: new accessToken + new refreshToken
+        API-->>B: new accessToken + rotated refresh cookie
         B->>API: Retry original request
     else jti missing (reused, revoked, or logged out)
         API-->>B: 401, client clears session and redirects to login
@@ -183,7 +185,8 @@ Why this design:
 
 - **Stateless access tokens** keep every API call free of a database or Redis lookup.
 - **Rotation with an atomic `GETDEL`** means a stolen refresh token can be used at most once, and reuse is detected because the legitimate client's next refresh fails.
-- **Revoke-all on password change** deletes every `jti` of the user, logging out all devices.
+- **httpOnly refresh cookie**: an XSS bug cannot read the refresh token and keep minting sessions. `SameSite=Strict` and the `/api/v1/auth` path keep the cookie off cross-site requests and every other endpoint. The 15-minute access token in `localStorage` is the remaining exposure, narrowed further by the Content-Security-Policy.
+- **Revoke-all on password change** deletes every `jti` of the user, logging out all devices; logout revokes the token and clears the cookie.
 - Access and refresh tokens carry a `typ` claim, so one can never be used in place of the other.
 - Impersonation stores the admin's ID as a claim, so actions are traceable and "stop impersonating" returns to the admin session.
 
@@ -201,33 +204,39 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant WS as STOMP broker
     participant T as Teacher (Monitor)
+    participant J as Expiry job
 
     S->>API: POST /api/v1/exams/{id}/start
     API->>API: Check published, inside start/end window, student's classroom
-    API->>DB: Create or resume attempt
+    API->>DB: Resume latest attempt, or create attempt N+1 (unique per exam, student, number)
     API->>API: remaining = min(startedAt + duration, endAt) - now
     API->>DB: Load questions (answer keys stripped)
-    API->>WS: STUDENT_JOINED
-    WS-->>T: Live update
     API-->>S: Questions, saved answers, remainingSeconds
+    API-)WS: STUDENT_JOINED (after commit)
+    WS-->>T: Live update
 
     loop Every answer selection
         S->>API: POST /api/v1/exams/attempts/{attemptId}/answer
         API->>API: Verify attempt owner, status, and remaining time
         API->>DB: Upsert exam_answers
-        API->>WS: ANSWER_SAVED (answered count)
+        API-)WS: ANSWER_SAVED (answered count)
     end
 
     opt Tab switch or fullscreen exit
         S->>API: POST /api/v1/exams/attempts/{attemptId}/violation
         API->>DB: violations + 1 (auto-submit at 5)
-        API->>WS: VIOLATION_REPORTED
+        API-)WS: VIOLATION_REPORTED
     end
 
-    S->>API: POST /api/v1/exams/attempts/{attemptId}/submit (or time runs out)
-    API->>DB: Grade objective questions, compute score and pass/fail
-    API->>WS: EXAM_SUBMITTED (score, status)
-    API-->>S: Result (if the exam allows showing it)
+    alt Student submits
+        S->>API: POST /api/v1/exams/attempts/{attemptId}/submit
+        API->>DB: Grade, compute score and pass/fail
+    else Student left and time ran out
+        J->>DB: Every minute: in-progress attempts past their deadline
+        J->>API: finalizeIfExpired(attemptId), one transaction each
+        API->>DB: Grade, compute score and pass/fail
+    end
+    API-)WS: EXAM_SUBMITTED (score, status)
 ```
 
 Attempt states:
@@ -235,24 +244,32 @@ Attempt states:
 ```mermaid
 stateDiagram-v2
     [*] --> in_progress: start
-    in_progress --> completed: submit / time expired / 5 violations (objective only)
-    in_progress --> needs_grading: submit with essay questions
-    needs_grading --> completed: teacher grades essays
+    in_progress --> completed: submit / time expired / expiry job / 5 violations
+    in_progress --> needs_grading: same, with essays or short answers without a key
+    needs_grading --> needs_grading: teacher grades one answer, others still pending
+    needs_grading --> completed: last pending answer graded
     completed --> [*]
 ```
 
-Grading rules:
+Grading rules (`AnswerGrader`, pure and unit tested):
 
-- Multiple choice and true/false are graded automatically (case-insensitive match against the stored key).
-- Essays are scored 0 until a teacher grades them; points are validated to stay between 0 and the question's maximum.
-- `score = earned points * 100 / total points`, compared with the exam's passing score.
+- Multiple choice and true/false: case-insensitive match against the stored key.
+- Short answer: compared after normalization (accents removed, lower case, whitespace collapsed, punctuation at both ends dropped). Teachers can accept several answers with `|`, for example `Jakarta|DKI Jakarta`. A short answer with no key goes to manual grading like an essay.
+- Essays: scored 0 until a teacher grades them, with points validated between 0 and the question's maximum. The attempt stays `needs_grading` until every pending answer has a grade.
+- `score = earned points * 100 / total points` (rounded down), compared with the exam's passing score.
 - Question and option shuffling use a seed derived from the attempt ID, so the order stays the same when a student reloads the page.
+
+Consistency rules:
+
+- **Expired attempts are finalized even when the request is rejected.** Resuming or saving after the deadline grades the attempt and throws `AttemptExpiredException`; the transaction is declared `noRollbackFor` that exception, so the result is committed.
+- **No duplicate attempts.** `UNIQUE (examination_id, student_id, attempt_number)` rejects a second concurrent "start"; the controller retries once, which resumes the attempt that won.
+- **No double grading.** `exam_attempts.version` (`@Version`) makes a student's submit and the expiry job (or two instances) race safely: one update wins, the other gets a conflict.
 
 ---
 
 ## Real-time proctoring
 
-The teacher's monitor subscribes to `/topic/exams/{examId}/monitor`. Events are published by the service layer **after** the change is saved, so the database stays the source of truth and the monitor can always be rebuilt from a REST call.
+The teacher's monitor subscribes to `/topic/exams/{examId}/monitor`. Events are sent **after the transaction commits**, so the monitor never shows an answer or score that was rolled back, and it can always be rebuilt from a REST call.
 
 Channel security (`WebSocketConfig` `ChannelInterceptor`):
 
@@ -260,7 +277,10 @@ Channel security (`WebSocketConfig` `ChannelInterceptor`):
 - `SUBSCRIBE` is deny-by-default: only the owning teacher or an admin may subscribe to an exam's monitor topic, and wildcard destinations are rejected.
 - Clients cannot `SEND` directly to broker destinations.
 
-The broker is Spring's **in-memory simple broker**, which is enough for a single instance (see the limits below).
+Delivery modes (`app.realtime.mode`):
+
+- `local` (default): Spring's in-memory simple broker of the instance that handled the request.
+- `redis`: the event is published to the Redis channel `elearning:exam-events`; every instance subscribes and relays it to its own broker, so a teacher connected to any instance receives it. If Redis is unreachable the event falls back to local delivery.
 
 ---
 
@@ -270,29 +290,35 @@ The broker is Spring's **in-memory simple broker**, which is enough for a single
 | --- | --- | --- |
 | Modular monolith | Microservices | One team and one deployable; domain packages keep boundaries clear and allow later extraction without paying the cost of distributed systems now. |
 | Stateless JWT + refresh tokens in Redis | Server-side sessions; JWT without a store | Stateless requests for the hot path, while logout, rotation, and revoke-all still work. |
-| In-memory STOMP simple broker | Redis or RabbitMQ broker relay | No extra infrastructure for a single instance. The service code does not change when switching to a relay. |
+| Refresh token in an httpOnly cookie | Refresh token in `localStorage` | Not readable by injected scripts; scoped to the auth endpoints with `SameSite=Strict`. |
+| In-memory STOMP broker + Redis pub/sub fan-out | STOMP broker relay (RabbitMQ / ActiveMQ) | Reuses the Redis that is already deployed; no new broker to run. A relay remains an option if message volume grows. |
+| Background expiry job + optimistic locking | Finalize only when the student returns | Results appear on time even if the student closed the browser; `@Version` keeps it safe with several instances, without a distributed lock. |
 | PostgreSQL + Flyway | MongoDB; Hibernate `ddl-auto` | Strongly relational data (classes, enrollments, attempts) and constraints; versioned, reviewable migrations. |
 | JSONB for question options | Separate `question_options` table | Options are always read and written together with the question. |
 | Server-side timing and grading | Trusting the client timer and answers | The client is untrusted; deadlines and scores must be computed where students cannot tamper with them. |
+| Pluggable storage (disk or S3) behind one service | Writing S3 code in each feature | Validation (extensions, random names, path traversal) stays in one place for every backend. |
 | Docker Compose on a VPS behind Cloudflare | Kubernetes; managed PaaS | Low, predictable cost; Cloudflare adds TLS and DDoS protection without extra servers. |
 
 ---
 
 ## Scaling limits and roadmap
 
-The current deployment targets **one backend instance**, which fits a school-sized load. These parts hold state in memory or on local disk and are the first things to change before running several instances:
+The default configuration targets **one backend instance**, which fits a school-sized load. Running several instances behind a load balancer needs these settings:
 
-| Today | Limit | Next step |
+| Concern | Setting | Effect |
 | --- | --- | --- |
-| STOMP simple broker (in-memory) | Events published on instance A never reach teachers connected to instance B | Spring `enableStompBrokerRelay` with RabbitMQ (STOMP plugin), or Redis pub/sub fan-out |
-| Rate-limit buckets in Caffeine | Each instance counts separately, so the effective limit multiplies | Bucket4j with a Redis-backed proxy manager |
-| Uploads on a Docker volume | Files exist on one host only | S3-compatible object storage (MinIO / S3) with pre-signed download URLs |
-| Expired attempts finalized on the next request | An abandoned attempt stays `in_progress` until the student returns | Scheduled job that finalizes attempts past their deadline |
-| `short_answer` questions are not auto-graded | They currently earn 0 points | Normalized text matching, or route them to manual grading like essays |
-| Concurrent "start" requests | Two simultaneous requests could create two attempts | Unique constraint on `(examination_id, student_id, attempt_number)` plus retry |
-| `LocalDateTime` with the server time zone | Ambiguous if servers run in different zones | Store `Instant` / `timestamptz` in UTC |
+| Live monitor events | `APP_REALTIME_MODE=redis` | Events reach teachers on every instance |
+| Rate limits | `APP_RATE_LIMIT_STORE=redis` | One shared counter per key (fixed window, fails open if Redis is down) |
+| Uploaded files | `APP_STORAGE_TYPE=s3` plus `APP_STORAGE_S3_*` | All instances read and write the same bucket (AWS S3, MinIO with `APP_STORAGE_S3_PATH_STYLE=true`) |
+| Expired attempts | nothing to change | Every instance may run the job; `@Version` lets one win per attempt |
+| WebSocket fallbacks | sticky sessions on the load balancer | SockJS fallback transports (when WebSocket is blocked) keep state on one instance |
 
-Other planned improvements: refresh token in an `httpOnly` cookie instead of `localStorage`, a Content-Security-Policy header, and a later migration to Spring Boot 4.
+Still open:
+
+- `LocalDateTime` with the server time zone; moving to `Instant` / `timestamptz` in UTC would remove ambiguity across regions.
+- The access token lives in `localStorage` for 15 minutes; keeping it in memory with a silent refresh on page load would close that gap.
+- Integration tests with Testcontainers for the full login and exam flow, and a frontend test suite.
+- A later migration to Spring Boot 4.
 
 ---
 
@@ -300,10 +326,11 @@ Other planned improvements: refresh token in an `httpOnly` cookie instead of `lo
 
 | Level | Current | Planned |
 | --- | --- | --- |
-| Unit | JWT provider (access vs refresh token types, invalid signature, unique `jti`, publicly known secret rejected) and file storage (path traversal, dangerous extensions) | Grading and timing rules in `ExamRunnerService`, refresh-token rotation |
-| Integration | Application context test against PostgreSQL and Redis in CI | Testcontainers tests for login, refresh reuse detection, and the full exam flow; JaCoCo coverage report |
-| Frontend | Type check and production build in CI | Component tests for the exam runner and the token refresh interceptor |
-| Security | Dependabot for Maven, npm, Docker, and GitHub Actions | `npm audit` and OWASP dependency check in CI; OWASP ZAP baseline scan against the demo instance |
+| Unit | Grading rules (`AnswerGrader`); exam flow in `ExamRunnerService` (scoring, manual grading, deadlines, retries, expiry job); refresh-token store rotation and reuse; refresh cookie attributes; in-memory and Redis rate limiters; real-time delivery (after commit, Redis fan-out, fallback); S3 storage; file key validation; JWT provider; file storage path traversal | More service coverage (assignments, materials) |
+| Integration | Application context test against PostgreSQL and Redis in CI | Testcontainers tests for login, refresh reuse detection, and the full exam flow |
+| Coverage | JaCoCo report on every CI run (summary in the job, HTML as an artifact) | Coverage threshold once the integration suite exists |
+| Frontend | Type check, lint, and production build in CI | Component tests for the exam runner and the token refresh interceptor |
+| Security | Dependabot for Maven, npm, Docker, and GitHub Actions; Content-Security-Policy on the SPA | `npm audit` and OWASP dependency check in CI; OWASP ZAP baseline scan against the demo instance |
 
 ---
 
@@ -312,5 +339,6 @@ Other planned improvements: refresh token in an `httpOnly` cookie instead of `lo
 - **CI:** GitHub Actions builds and tests the backend (with PostgreSQL and Redis service containers) and builds the frontend on every push and pull request.
 - **Deploy:** `deploy.sh` with `docker-compose.prod.yml`; required settings (`JWT_SECRET`, CORS origins, demo mode, registration, Swagger) are listed in the README.
 - **Health:** `/actuator/health` for container health checks; Actuator is not exposed publicly.
+- **Background jobs:** the expired-attempt finalizer runs every minute (`APP_EXAM_FINALIZER_INTERVAL_MS`) and logs how many attempts it finalized.
 - **Logs:** application logs at INFO, with warnings for rate-limit hits, rejected WebSocket connections, and exam violations.
 - **Dependencies:** Dependabot keeps Maven, npm, Docker, and GitHub Actions versions current.

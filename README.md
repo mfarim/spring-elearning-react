@@ -115,7 +115,8 @@ Exam List → Confirmation & Instructions → Secure Exam Runner
 | **Backend Core** | Java 21 LTS, Spring Boot 3.5.7 |
 | **Security & Auth** | Spring Security 6, JJWT 0.12.6, Method Security (`@PreAuthorize`), Impersonation Engine |
 | **Persistence** | PostgreSQL 16, Spring Data JPA, Hibernate 6, HikariCP, Flyway Migrations |
-| **Token Store & Realtime** | Redis 7 (refresh-token rotation & revocation), Spring WebSocket + STOMP (in-memory simple broker), SockJS |
+| **Token Store & Realtime** | Redis 7 (refresh-token rotation, optional shared rate limits and cross-instance events), Spring WebSocket + STOMP (in-memory simple broker), SockJS |
+| **File Storage** | Local Docker volume or S3-compatible object storage (AWS S3, MinIO) |
 | **Batch Processing** | Apache POI (Excel `.xlsx` batch parsing for Students & Question Banks) |
 | **API Documentation** | Springdoc OpenAPI 3 / Swagger UI (`/swagger-ui/index.html`) |
 | **Frontend Core** | React 19, TypeScript 5+, Vite 6 |
@@ -369,7 +370,10 @@ For production deployments:
 5. Add your public domain to `APP_CORS_ALLOWED_ORIGINS` (also used as the allowed WebSocket origins).
 6. Default accounts must change their password on first login. Set `APP_DEMO_MODE=true` **only** on a public demo instance with shared demo accounts.
 7. Keep `SPRINGDOC_ENABLED=false` and `APP_REGISTRATION_ENABLED=false` unless you need them.
-8. **Real client IP / rate limiting:** the backend trusts `X-Forwarded-For` only from internal proxies (Docker network). If the site is behind Cloudflare, restore the visitor IP on the host Nginx, otherwise all users share Cloudflare's IPs for rate limiting:
+8. The refresh token is an httpOnly `Secure` cookie, so serve the app over HTTPS. Set `APP_REFRESH_COOKIE_SECURE=false` only for plain-HTTP local runs (the local `docker-compose.yml` already does).
+9. The SPA sends a Content-Security-Policy. If you enable analytics, allow its hosts on the frontend container, e.g. `CSP_SCRIPT_SRC_EXTRA="https://www.googletagmanager.com"` and `CSP_CONNECT_SRC_EXTRA="https://*.google-analytics.com"`.
+10. **Several backend instances:** set `APP_REALTIME_MODE=redis`, `APP_RATE_LIMIT_STORE=redis`, and `APP_STORAGE_TYPE=s3` with `APP_STORAGE_S3_BUCKET` (plus `APP_STORAGE_S3_ENDPOINT` and `APP_STORAGE_S3_PATH_STYLE=true` for MinIO), and enable sticky sessions for `/ws`. Details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-limits-and-roadmap).
+11. **Real client IP / rate limiting:** the backend trusts `X-Forwarded-For` only from internal proxies (Docker network). If the site is behind Cloudflare, restore the visitor IP on the host Nginx, otherwise all users share Cloudflare's IPs for rate limiting:
    ```nginx
    # http {} block of the host nginx — keep the list in sync with https://www.cloudflare.com/ips/
    set_real_ip_from 173.245.48.0/20;   # ...add every Cloudflare IPv4/IPv6 range

@@ -1,12 +1,10 @@
 package com.elearning.security;
 
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,32 +13,27 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import com.github.benmanes.caffeine.cache.Cache;
 
 import java.time.Duration;
 
 /**
- * Server-Side Rate Limiting Filter using Bucket4j.
+ * Server-side rate limiting filter (counters in memory or in Redis, see {@link RateLimiter}).
  * Intercepts incoming HTTP requests at the Servlet Filter layer before hitting controllers,
  * protecting against brute-force attacks, DDoS, and excessive API burst traffic.
  */
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private final Cache<String, Bucket> authIpBuckets = LoginRateLimiterService.newBucketCache();
-    private final Cache<String, Bucket> submitIpBuckets = LoginRateLimiterService.newBucketCache();
-    private final Cache<String, Bucket> generalIpBuckets = LoginRateLimiterService.newBucketCache();
+    /** In-memory or Redis-backed, see {@code RateLimitConfig}. */
+    private final RateLimiter rateLimiter;
+    private static final Duration WINDOW = Duration.ofMinutes(1);
 
     // Rate limit thresholds
     private static final int AUTH_CAPACITY = 10;            // 10 login/auth requests per minute per IP
     private static final int SUBMIT_CAPACITY = 60;          // 60 autosave/submit requests per minute per IP
     private static final int GENERAL_CAPACITY = 120;        // 120 general API requests per minute per IP
-
-    private Bucket createBucket(int capacity, Duration duration) {
-        Bandwidth limit = Bandwidth.classic(capacity, Refill.greedy(capacity, duration));
-        return Bucket.builder().addLimit(limit).build();
-    }
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -67,11 +60,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // 1. Strictest tier: Auth endpoints (Login, Refresh, Register)
         if (requestUri.startsWith("/api/v1/auth/login") || requestUri.startsWith("/api/v1/auth/register")
                 || requestUri.startsWith("/api/v1/auth/change-password")) {
-            Bucket authBucket = authIpBuckets.get(
-                    clientIp,
-                    k -> createBucket(AUTH_CAPACITY, Duration.ofMinutes(1))
-            );
-            if (!authBucket.tryConsume(1)) {
+            if (!rateLimiter.tryAcquire("api:auth:" + clientIp, AUTH_CAPACITY, WINDOW)) {
                 log.warn("Rate limit [AUTH] exceeded for IP {} on {}", clientIp, requestUri);
                 sendRateLimitResponse(response, "Terlalu banyak percobaan autentikasi dari alamat IP ini. Silakan tunggu 1 menit sebelum mencoba lagi.");
                 return;
@@ -80,11 +69,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         // 2. Medium tier: Exam autosave and submissions (anti-flood during high-concurrency CBT)
         else if (requestUri.contains("/exams/") && (requestUri.endsWith("/submit") || requestUri.endsWith("/answer") || requestUri.endsWith("/answers"))) {
-            Bucket submitBucket = submitIpBuckets.get(
-                    clientIp,
-                    k -> createBucket(SUBMIT_CAPACITY, Duration.ofMinutes(1))
-            );
-            if (!submitBucket.tryConsume(1)) {
+            if (!rateLimiter.tryAcquire("api:submit:" + clientIp, SUBMIT_CAPACITY, WINDOW)) {
                 log.warn("Rate limit [EXAM SUBMIT] exceeded for IP {} on {}", clientIp, requestUri);
                 sendRateLimitResponse(response, "Terlalu banyak permintaan submit ujian secara bersamaan. Silakan tunggu beberapa saat.");
                 return;
@@ -93,11 +78,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         // 3. General API tier: All other /api/v1/** endpoints
         else if (requestUri.startsWith("/api/v1")) {
-            Bucket generalBucket = generalIpBuckets.get(
-                    clientIp,
-                    k -> createBucket(GENERAL_CAPACITY, Duration.ofMinutes(1))
-            );
-            if (!generalBucket.tryConsume(1)) {
+            if (!rateLimiter.tryAcquire("api:general:" + clientIp, GENERAL_CAPACITY, WINDOW)) {
                 log.warn("Rate limit [GENERAL API] exceeded for IP {} on {}", clientIp, requestUri);
                 sendRateLimitResponse(response, "Batas permintaan API terlampaui. Silakan kurangi frekuensi permintaan Anda.");
                 return;

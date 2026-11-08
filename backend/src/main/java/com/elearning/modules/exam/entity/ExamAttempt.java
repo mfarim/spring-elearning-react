@@ -52,6 +52,14 @@ public class ExamAttempt {
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 
+    /**
+     * Optimistic lock: when a student's submit and the background finalizer (or two instances)
+     * race on the same attempt, only one update wins and the other fails instead of grading twice.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

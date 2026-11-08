@@ -60,6 +60,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required - create .env with output of openssl rand -base64 32}
       STORAGE_UPLOAD_DIR: /app/storage/uploads
       APP_DEMO_MODE: ${APP_DEMO_MODE:-false}
+      # Local stack is served over plain HTTP, so the refresh-token cookie cannot be Secure here.
+      APP_REFRESH_COOKIE_SECURE: ${APP_REFRESH_COOKIE_SECURE:-false}
       LOG_LEVEL_APP: ${LOG_LEVEL_APP:-DEBUG}
     ports:
       - "127.0.0.1:8080:8080"
