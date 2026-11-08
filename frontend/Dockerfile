@@ -11,7 +11,7 @@ ENV VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID
 ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
 RUN npm run build
 
-FROM nginx:1.28-alpine
+FROM nginx:1.29-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # Rendered to /etc/nginx/conf.d/default.conf at start-up; only the variables below are substituted,
 # so nginx's own $uri, $host, ... stay untouched.
