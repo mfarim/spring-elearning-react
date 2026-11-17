@@ -89,6 +89,9 @@ services:
         VITE_GA_MEASUREMENT_ID: ${VITE_GA_MEASUREMENT_ID:-}
     container_name: elearning-frontend
     restart: always
+    environment:
+      CSP_SCRIPT_SRC_EXTRA: ${CSP_SCRIPT_SRC_EXTRA:-}
+      CSP_CONNECT_SRC_EXTRA: ${CSP_CONNECT_SRC_EXTRA:-}
     ports:
       - "127.0.0.1:80:80"
     depends_on:
