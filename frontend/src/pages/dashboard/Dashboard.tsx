@@ -15,9 +15,11 @@ import {
   Award,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
+  const { t, locale } = useI18n();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -91,7 +93,7 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-bold text-amber-900">{a.title}</h4>
                   <span className="text-[11px] text-amber-700/80">
-                    {new Date(a.createdAt).toLocaleDateString()}
+                    {new Date(a.createdAt).toLocaleDateString(locale)}
                   </span>
                 </div>
                 <p className="text-xs text-amber-800 mt-1 leading-relaxed">{a.content}</p>
@@ -105,17 +107,17 @@ export const Dashboard: React.FC = () => {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#059669] to-[#064e3b] p-6 sm:p-8 text-white shadow-lg">
         <div className="relative z-10 max-w-2xl">
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-emerald-100 border border-white/20 mb-4">
-            Tahun Ajaran 2026/2027
+            {t('dashboard.academicYear')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Selamat Datang, {user?.name}!
+            {t('dashboard.welcome', { name: user?.name ?? '' })}
           </h2>
           <p className="mt-2 text-emerald-100/90 text-sm leading-relaxed">
             {isAdmin
-              ? 'Kelola kurikulum akademik, supervisi guru & siswa, publikasikan pengumuman, dan pantau operasional ujian CBT sekolah.'
+              ? t('dashboard.introAdmin')
               : isTeacher
-              ? 'Rancang ujian CBT interaktif, kelola bank soal, periksa jawaban siswa, dan unggah materi pembelajaran.'
-              : 'Akses materi pembelajaran kelas, ikuti ujian CBT terjadwal dengan sistem anti-cheat, dan kumpulkan tugas.'}
+              ? t('dashboard.introTeacher')
+              : t('dashboard.introStudent')}
           </p>
         </div>
         {/* Subtle decorative circles */}
@@ -132,7 +134,7 @@ export const Dashboard: React.FC = () => {
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500">Total Kelas</p>
+                <p className="text-xs font-medium text-slate-500">{t('dashboard.statClassrooms')}</p>
                 <h3 className="text-2xl font-bold text-slate-800">{stats.classrooms}</h3>
               </div>
             </div>
@@ -142,7 +144,7 @@ export const Dashboard: React.FC = () => {
                 <BookMarked className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500">Mata Pelajaran</p>
+                <p className="text-xs font-medium text-slate-500">{t('dashboard.statSubjects')}</p>
                 <h3 className="text-2xl font-bold text-slate-800">{stats.subjects}</h3>
               </div>
             </div>
@@ -152,7 +154,7 @@ export const Dashboard: React.FC = () => {
                 <Users className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500">Siswa Terdaftar</p>
+                <p className="text-xs font-medium text-slate-500">{t('dashboard.statStudents')}</p>
                 <h3 className="text-2xl font-bold text-slate-800">{stats.students}</h3>
               </div>
             </div>
@@ -164,7 +166,7 @@ export const Dashboard: React.FC = () => {
             <FileCheck2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Ujian CBT</p>
+            <p className="text-xs font-medium text-slate-500">{t('dashboard.statExams')}</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.exams}</h3>
           </div>
         </div>
@@ -174,7 +176,7 @@ export const Dashboard: React.FC = () => {
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Materi Pelajaran</p>
+            <p className="text-xs font-medium text-slate-500">{t('dashboard.statMaterials')}</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.materials}</h3>
           </div>
         </div>
@@ -184,7 +186,7 @@ export const Dashboard: React.FC = () => {
             <MessageSquareShare className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Tugas Aktif</p>
+            <p className="text-xs font-medium text-slate-500">{t('dashboard.statAssignments')}</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats.assignments}</h3>
           </div>
         </div>
@@ -192,7 +194,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Quick Launch Cards */}
       <div>
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Navigasi Cepat</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-4">{t('dashboard.quickNav')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           <Link
             to="/exams"
@@ -205,12 +207,12 @@ export const Dashboard: React.FC = () => {
               <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
             </div>
             <h4 className="mt-4 text-base font-bold text-slate-800">
-              {isTeacher || isAdmin ? 'Manajemen Ujian CBT' : 'Ikuti Ujian CBT'}
+              {isTeacher || isAdmin ? t('dashboard.examsManageTitle') : t('dashboard.examsTakeTitle')}
             </h4>
             <p className="mt-1 text-xs text-slate-500 leading-relaxed">
               {isTeacher || isAdmin
-                ? 'Buat bank soal, atur jadwal ujian, dan buka ruang monitoring live ujian siswa.'
-                : 'Bergabung ke sesi ujian CBT dengan pengawasan anti-cheat dan autosave otomatis.'}
+                ? t('dashboard.examsManageText')
+                : t('dashboard.examsTakeText')}
             </p>
           </Link>
 
@@ -224,9 +226,9 @@ export const Dashboard: React.FC = () => {
               </div>
               <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
             </div>
-            <h4 className="mt-4 text-base font-bold text-slate-800">Materi Pelajaran</h4>
+            <h4 className="mt-4 text-base font-bold text-slate-800">{t('dashboard.materialsTitle')}</h4>
             <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-              Akses silabus digital, modul bacaan, dan materi pembelajaran interaktif.
+              {t('dashboard.materialsText')}
             </p>
           </Link>
 
@@ -241,9 +243,9 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
               </div>
-              <h4 className="mt-4 text-base font-bold text-slate-800">Rapor & Nilai Akademik</h4>
+              <h4 className="mt-4 text-base font-bold text-slate-800">{t('dashboard.gradesTitle')}</h4>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Lihat riwayat nilai tugas, ujian CBT, dan transkrip rapor hasil belajar Anda.
+                {t('dashboard.gradesText')}
               </p>
             </Link>
           ) : (
@@ -257,9 +259,9 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition" />
               </div>
-              <h4 className="mt-4 text-base font-bold text-slate-800">Tugas & Diskusi</h4>
+              <h4 className="mt-4 text-base font-bold text-slate-800">{t('dashboard.assignmentsTitle')}</h4>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Kumpulkan file tugas, beri penilaian siswa, dan berdiskusi di forum kelas.
+                {t('dashboard.assignmentsText')}
               </p>
             </Link>
           )}

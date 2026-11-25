@@ -1,4 +1,5 @@
 import api from '../api/client';
+import { t } from '../i18n';
 
 const FILES_PREFIX = '/api/v1/files/';
 
@@ -30,7 +31,7 @@ export async function openProtectedFile(url: string): Promise<void> {
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
   } catch (err) {
     win?.close();
-    alert('Berkas tidak dapat dibuka. Anda mungkin tidak memiliki akses atau berkas sudah dihapus.');
+    alert(t('common.fileOpenFailed'));
     throw err;
   }
 }

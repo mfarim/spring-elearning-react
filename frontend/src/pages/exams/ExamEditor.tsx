@@ -11,9 +11,17 @@ import {
   CheckCircle,
   X,
 } from 'lucide-react';
+import { useI18n, type MessageKey } from '../../i18n';
+
+const QUESTION_TYPE_LABELS: Record<Question['questionType'], MessageKey> = {
+  multiple_choice: 'examEditor.typeMultipleChoice',
+  true_false: 'examEditor.typeTrueFalse',
+  essay: 'examEditor.typeEssay',
+};
 
 export const ExamEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { t } = useI18n();
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +106,7 @@ export const ExamEditor: React.FC = () => {
       });
       loadExamAndQuestions();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to add question');
+      alert(err.response?.data?.message || t('examEditor.addFailed'));
     }
   };
 
@@ -114,19 +122,19 @@ export const ExamEditor: React.FC = () => {
       const res = await api.post(`/exams/${id}/questions/import-excel`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      alert(`Imported ${res.data.data.importedCount} questions successfully!`);
+      alert(t('examEditor.importSuccess', { count: res.data.data.importedCount }));
       setExcelModalOpen(false);
       setExcelFile(null);
       loadExamAndQuestions();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to import questions');
+      alert(err.response?.data?.message || t('examEditor.importFailed'));
     } finally {
       setImportLoading(false);
     }
   };
 
   const handleDeleteQuestion = async (questionId: number) => {
-    if (confirm('Delete this question from examination?')) {
+    if (confirm(t('examEditor.deleteConfirm'))) {
       await api.delete(`/exams/${id}/questions/${questionId}`);
       loadExamAndQuestions();
     }
@@ -140,7 +148,7 @@ export const ExamEditor: React.FC = () => {
           className="inline-flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-800 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Examinations</span>
+          <span>{t('examEditor.backToExams')}</span>
         </Link>
 
         <div className="flex items-center space-x-3">
@@ -149,14 +157,14 @@ export const ExamEditor: React.FC = () => {
             className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <UploadCloud className="w-4 h-4" />
-            <span>Excel Batch Import</span>
+            <span>{t('examEditor.excelImport')}</span>
           </button>
           <button
             onClick={() => setModalOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Question</span>
+            <span>{t('examEditor.addQuestion')}</span>
           </button>
         </div>
       </div>
@@ -169,20 +177,21 @@ export const ExamEditor: React.FC = () => {
             </span>
             <h2 className="text-xl font-bold text-slate-900 mt-2">{exam.title}</h2>
             <p className="text-xs text-slate-500 mt-1">
-              Class: <strong>{exam.classroomName}</strong> | Total Questions: <strong>{questions.length}</strong> | Duration:{' '}
-              <strong>{exam.durationMinutes} mins</strong>
+              {t('examEditor.classLabel')} <strong>{exam.classroomName}</strong> | {t('examEditor.totalQuestionsLabel')}{' '}
+              <strong>{questions.length}</strong> | {t('examEditor.durationLabel')}{' '}
+              <strong>{t('examEditor.durationMinutes', { count: exam.durationMinutes })}</strong>
             </p>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading questions...</div>
+        <div className="p-8 text-center text-slate-500">{t('examEditor.loading')}</div>
       ) : questions.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 shadow-xs">
           <FileQuestion className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-base font-medium">No questions in this examination</p>
-          <p className="text-xs mt-1 text-slate-400">Click "Add Question" or "Excel Batch Import" to populate questions.</p>
+          <p className="text-base font-medium">{t('examEditor.emptyTitle')}</p>
+          <p className="text-xs mt-1 text-slate-400">{t('examEditor.emptyText')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -197,11 +206,15 @@ export const ExamEditor: React.FC = () => {
                     {idx + 1}
                   </span>
                   <span className="text-xs font-semibold uppercase text-slate-500">
-                    Type: <strong>{q.questionType}</strong> | Points: <strong>{q.points}</strong>
+                    {t('examEditor.typeLabel')}{' '}
+                    <strong>{QUESTION_TYPE_LABELS[q.questionType] ? t(QUESTION_TYPE_LABELS[q.questionType]) : q.questionType}</strong>{' '}
+                    | {t('examEditor.pointsLabel')} <strong>{q.points}</strong>
                   </span>
                 </div>
                 <button
                   onClick={() => handleDeleteQuestion(q.id)}
+                  title={t('examEditor.deleteQuestion')}
+                  aria-label={t('examEditor.deleteQuestion')}
                   className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -237,7 +250,7 @@ export const ExamEditor: React.FC = () => {
 
               {q.correctAnswer && (
                 <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
-                  Correct Answer: <strong className="text-emerald-700 font-mono">{q.correctAnswer}</strong>
+                  {t('examEditor.correctAnswerLabel')} <strong className="text-emerald-700 font-mono">{q.correctAnswer}</strong>
                 </div>
               )}
             </div>
@@ -251,28 +264,29 @@ export const ExamEditor: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setModalOpen(false)}
+              aria-label={t('common.close')}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Add Examination Question</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('examEditor.modalTitle')}</h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Question Type</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examEditor.questionType')}</label>
                   <select
                     value={form.questionType}
                     onChange={(e) => setForm({ ...form, questionType: e.target.value as any })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="multiple_choice">Multiple Choice (Pilihan Ganda)</option>
-                    <option value="true_false">True / False (Benar / Salah)</option>
-                    <option value="essay">Essay / Descriptive</option>
+                    <option value="multiple_choice">{t('examEditor.optionMultipleChoice')}</option>
+                    <option value="true_false">{t('examEditor.optionTrueFalse')}</option>
+                    <option value="essay">{t('examEditor.optionEssay')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Points / Score</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examEditor.points')}</label>
                   <input
                     type="number"
                     required
@@ -286,20 +300,20 @@ export const ExamEditor: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Question Text</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('examEditor.questionText')}</label>
                 <textarea
                   rows={3}
                   required
                   value={form.questionText}
                   onChange={(e) => setForm({ ...form, questionText: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Enter the problem statement or question..."
+                  placeholder={t('examEditor.questionTextPlaceholder')}
                 />
               </div>
 
               {form.questionType === 'multiple_choice' && (
                 <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <div className="font-semibold text-slate-700">Answer Options & Correct Key</div>
+                  <div className="font-semibold text-slate-700">{t('examEditor.answerOptions')}</div>
                   {['A', 'B', 'C', 'D', 'E'].map((letter) => {
                     const keyName = `opt${letter}` as keyof typeof form;
                     return (
@@ -310,7 +324,7 @@ export const ExamEditor: React.FC = () => {
                         <input
                           type="text"
                           required={letter === 'A' || letter === 'B'}
-                          placeholder={`Option ${letter} text...`}
+                          placeholder={t('examEditor.optionPlaceholder', { letter })}
                           value={String(form[keyName])}
                           onChange={(e) => setForm({ ...form, [keyName]: e.target.value })}
                           className="flex-1 border border-slate-300 rounded-xl px-3 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-xs"
@@ -323,7 +337,7 @@ export const ExamEditor: React.FC = () => {
                             onChange={() => setForm({ ...form, correctAnswer: String(form[keyName]) })}
                             className="text-emerald-600 focus:ring-emerald-500"
                           />
-                          <span>Correct</span>
+                          <span>{t('examEditor.correct')}</span>
                         </label>
                       </div>
                     );
@@ -333,7 +347,7 @@ export const ExamEditor: React.FC = () => {
 
               {form.questionType === 'true_false' && (
                 <div className="pt-2 border-t border-slate-100 space-y-2">
-                  <label className="block font-semibold text-slate-700">Correct Answer</label>
+                  <label className="block font-semibold text-slate-700">{t('examEditor.correctAnswer')}</label>
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center space-x-1.5 cursor-pointer">
                       <input
@@ -344,7 +358,7 @@ export const ExamEditor: React.FC = () => {
                         onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
                         className="text-emerald-600 focus:ring-emerald-500"
                       />
-                      <span>Benar (True)</span>
+                      <span>{t('examEditor.trueLabel')}</span>
                     </label>
                     <label className="flex items-center space-x-1.5 cursor-pointer">
                       <input
@@ -355,7 +369,7 @@ export const ExamEditor: React.FC = () => {
                         onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
                         className="text-emerald-600 focus:ring-emerald-500"
                       />
-                      <span>Salah (False)</span>
+                      <span>{t('examEditor.falseLabel')}</span>
                     </label>
                   </div>
                 </div>
@@ -363,13 +377,13 @@ export const ExamEditor: React.FC = () => {
 
               {form.questionType === 'essay' && (
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Grading Rubric / Answer Key Notes</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examEditor.rubric')}</label>
                   <textarea
                     rows={2}
                     value={form.correctAnswer}
                     onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                    placeholder="Key concepts required for maximum score..."
+                    placeholder={t('examEditor.rubricPlaceholder')}
                   />
                 </div>
               )}
@@ -380,13 +394,13 @@ export const ExamEditor: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer"
                 >
-                  Save Question
+                  {t('examEditor.saveQuestion')}
                 </button>
               </div>
             </form>
@@ -400,14 +414,14 @@ export const ExamEditor: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
             <button
               onClick={() => setExcelModalOpen(false)}
+              aria-label={t('common.close')}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Bulk Import Questions from Excel</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{t('examEditor.importTitle')}</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Upload an <code>.xlsx</code> spreadsheet with columns:{' '}
-              <strong>Question Text, Type, Opt A, Opt B, Opt C, Opt D, Opt E, Correct Answer, Points, Explanation</strong>.
+              {t('examEditor.importIntro')} <strong>{t('examEditor.importColumns')}</strong>.
             </p>
 
             <form onSubmit={handleImportExcel} className="space-y-4 text-sm">
@@ -428,14 +442,14 @@ export const ExamEditor: React.FC = () => {
                   onClick={() => setExcelModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Close
+                  {t('common.close')}
                 </button>
                 <button
                   type="submit"
                   disabled={importLoading || !excelFile}
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {importLoading ? 'Uploading & Parsing...' : 'Import Questions'}
+                  {importLoading ? t('examEditor.uploading') : t('examEditor.importButton')}
                 </button>
               </div>
             </form>

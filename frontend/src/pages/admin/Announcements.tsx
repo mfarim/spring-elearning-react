@@ -2,12 +2,20 @@ import React, { useEffect, useState } from 'react';
 import api from '../../api/client';
 import type { Announcement, ApiResponse } from '../../types';
 import { Plus, Trash2, Edit2, Bell, X } from 'lucide-react';
+import { useI18n, type MessageKey } from '../../i18n';
+
+const TARGET_LABELS: Record<string, MessageKey> = {
+  all: 'announcements.targetAllShort',
+  teacher: 'announcements.targetTeacherShort',
+  student: 'announcements.targetStudentShort',
+};
 
 export const Announcements: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Announcement | null>(null);
+  const { t, locale } = useI18n();
 
   const [form, setForm] = useState({
     title: '',
@@ -64,12 +72,12 @@ export const Announcements: React.FC = () => {
       setModalOpen(false);
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save announcement');
+      alert(err.response?.data?.message || t('announcements.saveFailed'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Delete this announcement?')) {
+    if (confirm(t('announcements.confirmDelete'))) {
       await api.delete(`/announcements/${id}`);
       loadData();
     }
@@ -79,37 +87,37 @@ export const Announcements: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Papan Pengumuman</h2>
-          <p className="text-xs text-slate-500 mt-1">Publikasikan informasi resmi kepada guru dan siswa</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('announcements.title')}</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('announcements.subtitle')}</p>
         </div>
         <button
           onClick={() => openModal()}
           className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Buat Pengumuman</span>
+          <span>{t('announcements.create')}</span>
         </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Memuat pengumuman...</div>
+          <div className="p-8 text-center text-slate-500">{t('announcements.loading')}</div>
         ) : announcements.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <Bell className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">Belum ada pengumuman yang dipublikasikan</p>
-            <p className="text-xs mt-1 text-slate-400">Buat berita sekolah atau informasi jadwal ujian di sini.</p>
+            <p className="text-base font-medium">{t('announcements.emptyTitle')}</p>
+            <p className="text-xs mt-1 text-slate-400">{t('announcements.emptyHint')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm min-w-[650px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Judul</th>
-                  <th className="px-6 py-4">Target Audiens</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Tanggal</th>
-                  <th className="px-6 py-4 text-right">Aksi</th>
+                  <th className="px-6 py-4">{t('announcements.colTitle')}</th>
+                  <th className="px-6 py-4">{t('announcements.target')}</th>
+                  <th className="px-6 py-4">{t('common.status')}</th>
+                  <th className="px-6 py-4">{t('announcements.colDate')}</th>
+                  <th className="px-6 py-4 text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -121,7 +129,7 @@ export const Announcements: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="bg-emerald-50 text-emerald-700 text-xs font-bold uppercase px-2.5 py-0.5 rounded-md border border-emerald-200">
-                        {a.target}
+                        {TARGET_LABELS[a.target] ? t(TARGET_LABELS[a.target]) : a.target}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -130,24 +138,24 @@ export const Announcements: React.FC = () => {
                           a.published ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
                         }`}
                       >
-                        {a.published ? 'Published' : 'Draft'}
+                        {a.published ? t('announcements.published') : t('announcements.draft')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-500 text-xs">
-                      {new Date(a.createdAt).toLocaleDateString()}
+                      {new Date(a.createdAt).toLocaleDateString(locale)}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
                         onClick={() => openModal(a)}
                         className="text-slate-500 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
-                        title="Edit Pengumuman"
+                        title={t('announcements.editShort')}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(a.id)}
                         className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                        title="Hapus Pengumuman"
+                        title={t('announcements.deleteShort')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -166,20 +174,21 @@ export const Announcements: React.FC = () => {
             <button
               onClick={() => setModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-bold text-slate-900 mb-4">
-              {editingItem ? 'Edit Announcement' : 'Post New Announcement'}
+              {editingItem ? t('announcements.editTitle') : t('announcements.addTitle')}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Title</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('announcements.titleLabel')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Jadwal Ujian Akhir Semester Ganjil"
+                  placeholder={t('announcements.titlePlaceholder')}
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -187,27 +196,27 @@ export const Announcements: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Target Audience</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('announcements.target')}</label>
                 <select
                   value={form.target}
                   onChange={(e) => setForm({ ...form, target: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 >
-                  <option value="all">Everyone (All)</option>
-                  <option value="teacher">Teachers Only</option>
-                  <option value="student">Students Only</option>
+                  <option value="all">{t('announcements.targetAll')}</option>
+                  <option value="teacher">{t('announcements.targetTeacher')}</option>
+                  <option value="student">{t('announcements.targetStudent')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Content</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('announcements.content')}</label>
                 <textarea
                   rows={4}
                   required
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Announcement body text..."
+                  placeholder={t('announcements.contentPlaceholder')}
                 />
               </div>
 
@@ -218,7 +227,7 @@ export const Announcements: React.FC = () => {
                   onChange={(e) => setForm({ ...form, published: e.target.checked })}
                   className="rounded text-emerald-600 focus:ring-emerald-500"
                 />
-                <span>Publikasikan sekarang</span>
+                <span>{t('announcements.publishNow')}</span>
               </label>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
@@ -227,13 +236,13 @@ export const Announcements: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Batal
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Simpan Pengumuman
+                  {t('announcements.save')}
                 </button>
               </div>
             </form>

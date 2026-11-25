@@ -14,6 +14,8 @@ import {
   MonitorCheck,
   Smartphone,
 } from 'lucide-react';
+import { useI18n } from '../../i18n';
+import { LanguageSwitcher } from '../../components/common/LanguageSwitcher';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -23,6 +25,7 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuthStore();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +37,7 @@ export const Login: React.FC = () => {
       const user = await login(email, password);
       navigate(user.mustChangePassword ? '/change-password' : '/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Email atau password yang Anda masukkan salah');
+      setError(err.response?.data?.message || t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -55,14 +58,14 @@ export const Login: React.FC = () => {
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
-              alt="Spring E-Learning Logo"
+              alt={t('common.logoAlt')}
               className="w-11 h-11 rounded-xl object-cover shadow-sm border border-white/20"
             />
             <div>
               <span className="text-xl font-bold text-white tracking-tight">
-                Spring E-Learning
+                {t('common.appName')}
               </span>
-              <p className="text-[11px] text-emerald-200">Spring Boot & React CBT</p>
+              <p className="text-[11px] text-emerald-200">{t('auth.brandSubtitle')}</p>
             </div>
           </div>
 
@@ -71,31 +74,30 @@ export const Login: React.FC = () => {
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 mb-6 border border-white/10">
               <div className="w-2 h-2 rounded-full bg-emerald-300 animate-ping" />
               <span className="text-xs font-medium text-white/90">
-                Platform E-Learning & CBT Terintegrasi
+                {t('auth.platformBadge')}
               </span>
             </div>
 
             <h1 className="text-4xl font-extrabold text-white leading-tight mb-4">
-              Selamat Datang<br />Kembali!
+              {t('auth.welcomeLine1')}<br />{t('auth.welcomeLine2')}
             </h1>
             <p className="text-base text-emerald-100 mb-8 max-w-md leading-relaxed">
-              Kelola pembelajaran, materi akademik, dan ujian CBT sekolah Anda dengan
-              mudah, aman, dan efisien.
+              {t('auth.welcomeText')}
             </p>
 
             {/* Stats */}
             <div className="flex gap-4 mb-8">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 text-center border border-white/10 flex-1">
                 <p className="text-2xl font-bold text-white">100+</p>
-                <p className="text-xs text-emerald-200">Sekolah Mitra</p>
+                <p className="text-xs text-emerald-200">{t('auth.statSchools')}</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 text-center border border-white/10 flex-1">
                 <p className="text-2xl font-bold text-white">50K+</p>
-                <p className="text-xs text-emerald-200">Siswa Aktif</p>
+                <p className="text-xs text-emerald-200">{t('auth.statStudents')}</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 text-center border border-white/10 flex-1">
                 <p className="text-2xl font-bold text-white">99.9%</p>
-                <p className="text-xs text-emerald-200">CBT Uptime</p>
+                <p className="text-xs text-emerald-200">{t('auth.statUptime')}</p>
               </div>
             </div>
 
@@ -105,26 +107,26 @@ export const Login: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-4 h-4 text-emerald-200" />
                 </div>
-                <span>Dashboard analitik real-time & manajemen kelas</span>
+                <span>{t('auth.featureDashboard')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
                   <MonitorCheck className="w-4 h-4 text-emerald-200" />
                 </div>
-                <span>Ujian CBT aman dengan anti-cheat proctoring & timer</span>
+                <span>{t('auth.featureCbt')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
                   <Smartphone className="w-4 h-4 text-emerald-200" />
                 </div>
-                <span>Responsif untuk smartphone, tablet, dan desktop</span>
+                <span>{t('auth.featureResponsive')}</span>
               </div>
             </div>
           </div>
 
           {/* Footer */}
           <p className="text-xs text-emerald-300/60">
-            © 2026 Spring E-Learning. All rights reserved.
+            {t('auth.copyright')}
           </p>
         </div>
 
@@ -134,25 +136,26 @@ export const Login: React.FC = () => {
       </div>
 
       {/* Right Panel — Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-white">
+      <div className="relative flex-1 flex items-center justify-center p-6 sm:p-10 bg-white">
+        <LanguageSwitcher className="absolute top-4 right-4" />
         <div className="w-full max-w-md">
           {/* Mobile brand header (shown on small screens) */}
           <div className="lg:hidden text-center mb-8">
             <img
               src="/logo.png"
-              alt="Spring E-Learning Logo"
+              alt={t('common.logoAlt')}
               className="w-14 h-14 rounded-2xl mx-auto mb-3 shadow-md shadow-emerald-600/20 object-cover"
             />
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Spring E-Learning</h2>
-            <p className="text-xs text-gray-500 mt-1">Platform E-Learning & CBT Sekolah</p>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('common.appName')}</h2>
+            <p className="text-xs text-gray-500 mt-1">{t('auth.mobileTagline')}</p>
           </div>
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Masuk ke Akun Anda
+              {t('auth.loginTitle')}
             </h2>
             <p className="text-sm text-gray-500 mt-1.5">
-              Silakan masukkan email dan password untuk mengakses portal.
+              {t('auth.loginSubtitle')}
             </p>
           </div>
 
@@ -165,7 +168,7 @@ export const Login: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                Alamat Email
+                {t('auth.emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -182,7 +185,7 @@ export const Login: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                Kata Sandi
+                {t('auth.passwordLabel')}
               </label>
               <div className="relative">
                 <Lock className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -198,7 +201,7 @@ export const Login: React.FC = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                  aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -212,10 +215,10 @@ export const Login: React.FC = () => {
                   defaultChecked
                   className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                 />
-                <span>Ingat saya di perangkat ini</span>
+                <span>{t('auth.rememberMe')}</span>
               </label>
               <span className="text-emerald-600 hover:text-emerald-700 font-medium cursor-pointer">
-                Lupa kata sandi?
+                {t('auth.forgotPassword')}
               </span>
             </div>
 
@@ -224,7 +227,7 @@ export const Login: React.FC = () => {
               disabled={loading}
               className="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl shadow-xs transition duration-150 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
             >
-              <span>{loading ? 'Memverifikasi...' : 'Masuk ke Portal'}</span>
+              <span>{loading ? t('auth.verifying') : t('auth.loginButton')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -232,7 +235,7 @@ export const Login: React.FC = () => {
           {/* Quick Demo Credentials matching laravel-elearning style */}
           <div className="mt-8 border-t border-gray-100 pt-6">
             <p className="text-xs font-semibold text-gray-600 mb-3 text-center sm:text-left flex items-center justify-center sm:justify-start gap-1.5">
-              <span>Pilih Akun Demo Cepat:</span>
+              <span>{t('auth.demoAccounts')}</span>
             </p>
             <div className="grid grid-cols-3 gap-2 mb-3">
               <button
@@ -241,7 +244,7 @@ export const Login: React.FC = () => {
                 className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 py-2.5 px-2 text-xs font-medium text-gray-700 hover:text-emerald-700 transition cursor-pointer"
               >
                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                <span>Admin</span>
+                <span>{t('common.roleAdmin')}</span>
               </button>
               <button
                 type="button"
@@ -249,7 +252,7 @@ export const Login: React.FC = () => {
                 className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 py-2.5 px-2 text-xs font-medium text-gray-700 hover:text-emerald-700 transition cursor-pointer"
               >
                 <UserCheck className="w-5 h-5 text-emerald-600" />
-                <span>Guru</span>
+                <span>{t('common.roleTeacher')}</span>
               </button>
               <button
                 type="button"
@@ -257,11 +260,11 @@ export const Login: React.FC = () => {
                 className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 py-2.5 px-2 text-xs font-medium text-gray-700 hover:text-emerald-700 transition cursor-pointer"
               >
                 <GraduationCap className="w-5 h-5 text-emerald-600" />
-                <span>Siswa</span>
+                <span>{t('common.roleStudent')}</span>
               </button>
             </div>
             <p className="text-[11px] text-gray-400 text-center">
-              Koneksi terenkripsi Spring Boot Security & JWT
+              {t('auth.secureConnection')}
             </p>
           </div>
         </div>
