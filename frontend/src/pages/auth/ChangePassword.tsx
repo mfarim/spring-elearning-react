@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KeyRound, ShieldAlert, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useI18n } from '../../i18n';
+import { LanguageSwitcher } from '../../components/common/LanguageSwitcher';
 
 const MIN_LENGTH = 8;
 const MAX_LENGTH = 72; // BCrypt limit
@@ -9,6 +11,7 @@ const MAX_LENGTH = 72; // BCrypt limit
 export const ChangePassword: React.FC = () => {
   const { user, changePassword, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -24,11 +27,11 @@ export const ChangePassword: React.FC = () => {
     setError(null);
 
     if (newPassword.length < MIN_LENGTH || newPassword.length > MAX_LENGTH) {
-      setError(`Password baru harus ${MIN_LENGTH}–${MAX_LENGTH} karakter.`);
+      setError(t('auth.passwordLength', { min: MIN_LENGTH, max: MAX_LENGTH }));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Konfirmasi password tidak sama.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
 
@@ -39,7 +42,7 @@ export const ChangePassword: React.FC = () => {
     } catch (err: any) {
       const data = err.response?.data;
       const fieldErrors = data?.data && typeof data.data === 'object' ? Object.values(data.data).join(' ') : '';
-      setError(fieldErrors || data?.message || 'Gagal mengganti password. Silakan coba lagi.');
+      setError(fieldErrors || data?.message || t('auth.changeFailed'));
     } finally {
       setLoading(false);
     }
@@ -50,14 +53,15 @@ export const ChangePassword: React.FC = () => {
     'w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <LanguageSwitcher className="absolute top-4 right-4" />
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2.5 bg-emerald-600 text-white rounded-xl">
             <KeyRound className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Ganti Password</h1>
+            <h1 className="text-lg font-bold text-gray-900">{t('auth.changePasswordTitle')}</h1>
             <p className="text-xs text-gray-500">{user?.email}</p>
           </div>
         </div>
@@ -65,10 +69,7 @@ export const ChangePassword: React.FC = () => {
         {forced && (
           <div className="mb-5 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>
-              Akun Anda masih memakai password default atau password yang dibuat admin. Demi keamanan,
-              silakan buat password baru sebelum melanjutkan.
-            </span>
+            <span>{t('auth.forcedNotice')}</span>
           </div>
         )}
 
@@ -79,7 +80,7 @@ export const ChangePassword: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="currentPassword" className="block text-xs font-semibold text-gray-700 mb-1">
-              Password saat ini
+              {t('auth.currentPassword')}
             </label>
             <input
               id="currentPassword"
@@ -93,7 +94,7 @@ export const ChangePassword: React.FC = () => {
           </div>
           <div>
             <label htmlFor="newPassword" className="block text-xs font-semibold text-gray-700 mb-1">
-              Password baru
+              {t('auth.newPassword')}
             </label>
             <input
               id="newPassword"
@@ -106,11 +107,11 @@ export const ChangePassword: React.FC = () => {
               onChange={(e) => setNewPassword(e.target.value)}
               className={inputClass}
             />
-            <p className="mt-1 text-[11px] text-gray-400">Minimal {MIN_LENGTH} karakter.</p>
+            <p className="mt-1 text-[11px] text-gray-400">{t('auth.newPasswordHint', { min: MIN_LENGTH })}</p>
           </div>
           <div>
             <label htmlFor="confirmPassword" className="block text-xs font-semibold text-gray-700 mb-1">
-              Ulangi password baru
+              {t('auth.confirmPassword')}
             </label>
             <input
               id="confirmPassword"
@@ -129,7 +130,7 @@ export const ChangePassword: React.FC = () => {
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emerald-700 cursor-pointer"
           >
             {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            {showPasswords ? 'Sembunyikan password' : 'Tampilkan password'}
+            {showPasswords ? t('auth.hidePasswords') : t('auth.showPasswords')}
           </button>
 
           <button
@@ -137,7 +138,7 @@ export const ChangePassword: React.FC = () => {
             disabled={loading}
             className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl text-sm transition cursor-pointer"
           >
-            {loading ? 'Menyimpan...' : 'Simpan Password Baru'}
+            {loading ? t('common.saving') : t('auth.saveNewPassword')}
           </button>
         </form>
 
@@ -150,11 +151,11 @@ export const ChangePassword: React.FC = () => {
               onClick={() => navigate(-1)}
               className="flex items-center gap-1 text-gray-500 hover:text-emerald-700 cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Kembali
+              <ArrowLeft className="w-3.5 h-3.5" /> {t('common.back')}
             </button>
           )}
           <button type="button" onClick={logout} className="text-gray-500 hover:text-rose-600 cursor-pointer">
-            Keluar
+            {t('nav.logout')}
           </button>
         </div>
       </div>

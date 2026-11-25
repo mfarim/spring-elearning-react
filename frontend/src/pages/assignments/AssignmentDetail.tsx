@@ -20,10 +20,12 @@ import {
   Download,
   Award,
 } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 export const AssignmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { t, locale } = useI18n();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -85,10 +87,10 @@ export const AssignmentDetail: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      alert('Assignment submitted successfully!');
+      alert(t('assignmentDetail.submitSuccess'));
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to submit assignment');
+      alert(err.response?.data?.message || t('assignmentDetail.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -107,7 +109,7 @@ export const AssignmentDetail: React.FC = () => {
       setGradeModalOpen(false);
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to grade submission');
+      alert(err.response?.data?.message || t('assignmentDetail.gradeFailed'));
     }
   };
 
@@ -122,20 +124,20 @@ export const AssignmentDetail: React.FC = () => {
       setCommentText('');
       loadData();
     } catch (err: any) {
-      alert('Failed to post comment');
+      alert(t('assignmentDetail.commentFailed'));
     }
   };
 
   if (loading && !assignment) {
-    return <div className="p-8 text-center text-slate-500">Loading assignment details...</div>;
+    return <div className="p-8 text-center text-slate-500">{t('assignmentDetail.loading')}</div>;
   }
 
   if (!assignment) {
     return (
       <div className="p-12 text-center text-slate-500">
-        <p>Assignment not found.</p>
+        <p>{t('assignmentDetail.notFound')}</p>
         <Link to="/assignments" className="text-emerald-600 hover:text-emerald-700 font-semibold mt-2 inline-block">
-          Back to Assignments
+          {t('assignmentDetail.backToAssignments')}
         </Link>
       </div>
     );
@@ -148,7 +150,7 @@ export const AssignmentDetail: React.FC = () => {
         className="inline-flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-800 transition"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to Assignments</span>
+        <span>{t('assignmentDetail.backToAssignments')}</span>
       </Link>
 
       {/* Assignment Header Card */}
@@ -159,7 +161,7 @@ export const AssignmentDetail: React.FC = () => {
           </span>
           <div className="flex items-center space-x-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
             <Clock className="w-3.5 h-3.5" />
-            <span>Batas: {new Date(assignment.dueDate).toLocaleString()}</span>
+            <span>{t('assignmentDetail.dueLabel', { date: new Date(assignment.dueDate).toLocaleString(locale) })}</span>
           </div>
         </div>
 
@@ -168,7 +170,7 @@ export const AssignmentDetail: React.FC = () => {
 
         {assignment.instructions && (
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1">
-            <strong className="block text-slate-900 font-bold mb-1">Task Instructions:</strong>
+            <strong className="block text-slate-900 font-bold mb-1">{t('assignmentDetail.instructions')}</strong>
             <p className="whitespace-pre-wrap leading-relaxed">{assignment.instructions}</p>
           </div>
         )}
@@ -179,23 +181,23 @@ export const AssignmentDetail: React.FC = () => {
         <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-4">
           <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
             <FileCheck className="w-5 h-5 text-emerald-600" />
-            <span>Pengumpulan Tugas Saya</span>
+            <span>{t('assignmentDetail.mySubmission')}</span>
           </h3>
 
           {assignment.hasSubmitted ? (
             <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
               <div className="flex items-center space-x-2 text-emerald-800 font-bold text-sm">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
-                <span>Tugas Berhasil Dikumpulkan</span>
+                <span>{t('assignmentDetail.submittedTitle')}</span>
               </div>
               <p className="text-xs text-emerald-700">
-                Diserahkan pada: {new Date(assignment.studentSubmittedAt || '').toLocaleString()}
+                {t('assignmentDetail.submittedAt', { date: new Date(assignment.studentSubmittedAt || '').toLocaleString(locale) })}
               </p>
               {assignment.studentScore !== null && assignment.studentScore !== undefined && (
                 <div className="mt-3 pt-3 border-t border-emerald-200 flex items-center space-x-2">
                   <Award className="w-5 h-5 text-emerald-700" />
                   <span className="text-sm font-bold text-emerald-900">
-                    Nilai: {assignment.studentScore} / {assignment.maxScore}
+                    {t('assignmentDetail.scoreLabel', { score: assignment.studentScore, max: assignment.maxScore })}
                   </span>
                 </div>
               )}
@@ -203,7 +205,7 @@ export const AssignmentDetail: React.FC = () => {
           ) : (
             <form onSubmit={handleStudentSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Unggah Berkas / Dokumen Tugas</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('assignmentDetail.uploadLabel')}</label>
                 <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-500 transition">
                   <UploadCloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <input
@@ -216,12 +218,12 @@ export const AssignmentDetail: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('assignmentDetail.notesLabel')}</label>
                 <textarea
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Catatan tambahan untuk guru pengampu..."
+                  placeholder={t('assignmentDetail.notesPlaceholder')}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
@@ -231,7 +233,7 @@ export const AssignmentDetail: React.FC = () => {
                 disabled={submitting || !file}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-md shadow-emerald-600/25 transition cursor-pointer disabled:opacity-50"
               >
-                {submitting ? 'Mengunggah Berkas...' : 'Kumpulkan Tugas'}
+                {submitting ? t('assignmentDetail.uploading') : t('assignmentDetail.submitButton')}
               </button>
             </form>
           )}
@@ -243,22 +245,22 @@ export const AssignmentDetail: React.FC = () => {
         <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900">
-              Student Submissions ({submissions.length})
+              {t('assignmentDetail.submissionsTitle', { count: submissions.length })}
             </h3>
           </div>
 
           {submissions.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Belum ada tugas yang dikumpulkan.</div>
+            <div className="p-8 text-center text-slate-400 text-sm">{t('assignmentDetail.noSubmissions')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm min-w-[650px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="px-6 py-4">Siswa</th>
-                    <th className="px-6 py-4">Tanggal Pengumpulan</th>
-                    <th className="px-6 py-4">Berkas</th>
-                    <th className="px-6 py-4">Nilai</th>
-                    <th className="px-6 py-4 text-right">Aksi</th>
+                    <th className="px-6 py-4">{t('assignmentDetail.colStudent')}</th>
+                    <th className="px-6 py-4">{t('assignmentDetail.colSubmittedAt')}</th>
+                    <th className="px-6 py-4">{t('assignmentDetail.colFile')}</th>
+                    <th className="px-6 py-4">{t('assignmentDetail.colScore')}</th>
+                    <th className="px-6 py-4 text-right">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -266,10 +268,10 @@ export const AssignmentDetail: React.FC = () => {
                     <tr key={s.id} className="hover:bg-slate-50/80 transition">
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-900">{s.studentName}</div>
-                        <div className="text-xs font-mono text-slate-400">NIS: {s.studentNis}</div>
+                        <div className="text-xs font-mono text-slate-400">{t('assignmentDetail.nis', { nis: s.studentNis })}</div>
                       </td>
                       <td className="px-6 py-4 text-slate-600 text-xs">
-                        {new Date(s.submittedAt).toLocaleString()}
+                        {new Date(s.submittedAt).toLocaleString(locale)}
                       </td>
                       <td className="px-6 py-4">
                         {s.filePath ? (
@@ -279,7 +281,7 @@ export const AssignmentDetail: React.FC = () => {
                             className="inline-flex items-center space-x-1 text-xs text-emerald-600 font-semibold hover:underline cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>Unduh</span>
+                            <span>{t('common.download')}</span>
                           </button>
                         ) : (
                           <span className="text-xs text-slate-400">-</span>
@@ -292,7 +294,7 @@ export const AssignmentDetail: React.FC = () => {
                           </span>
                         ) : (
                           <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-semibold">
-                            Belum Dinilai
+                            {t('assignmentDetail.notGraded')}
                           </span>
                         )}
                       </td>
@@ -306,7 +308,7 @@ export const AssignmentDetail: React.FC = () => {
                           }}
                           className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer border border-emerald-200"
                         >
-                          Beri Nilai
+                          {t('assignmentDetail.gradeButton')}
                         </button>
                       </td>
                     </tr>
@@ -322,7 +324,7 @@ export const AssignmentDetail: React.FC = () => {
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-6">
         <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
           <MessageSquare className="w-5 h-5 text-emerald-600" />
-          <span>Forum Diskusi Kelas ({discussions.length})</span>
+          <span>{t('assignmentDetail.forumTitle', { count: discussions.length })}</span>
         </h3>
 
         <form onSubmit={handlePostDiscussion} className="flex gap-3">
@@ -331,7 +333,7 @@ export const AssignmentDetail: React.FC = () => {
             required
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Ajukan pertanyaan atau diskusikan tugas ini..."
+            placeholder={t('assignmentDetail.commentPlaceholder')}
             className="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
           />
           <button
@@ -339,7 +341,7 @@ export const AssignmentDetail: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Kirim</span>
+            <span>{t('common.submit')}</span>
           </button>
         </form>
 
@@ -349,10 +351,14 @@ export const AssignmentDetail: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-sm text-slate-800">{d.userName}</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-slate-100 text-slate-600">
-                  {d.userRole}
+                  {d.userRole === 'ROLE_ADMIN'
+                    ? t('common.roleAdmin')
+                    : d.userRole === 'ROLE_TEACHER'
+                      ? t('common.roleTeacher')
+                      : t('common.roleStudent')}
                 </span>
                 <span className="text-xs text-slate-400">
-                  {new Date(d.createdAt).toLocaleString()}
+                  {new Date(d.createdAt).toLocaleString(locale)}
                 </span>
               </div>
               <p className="text-xs text-slate-700 leading-relaxed">{d.message}</p>
@@ -366,12 +372,12 @@ export const AssignmentDetail: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
             <h3 className="text-lg font-bold text-slate-900">
-              Grade Submission: {selectedSub.studentName}
+              {t('assignmentDetail.gradeModalTitle', { name: selectedSub.studentName })}
             </h3>
 
             <form onSubmit={handleGradeSubmission} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Score (0 - {assignment.maxScore})</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('assignmentDetail.scoreRange', { max: assignment.maxScore })}</label>
                 <input
                   type="number"
                   required
@@ -384,12 +390,12 @@ export const AssignmentDetail: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Instructor Feedback</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('assignmentDetail.feedbackLabel')}</label>
                 <textarea
                   rows={3}
                   value={gradeFeedback}
                   onChange={(e) => setGradeFeedback(e.target.value)}
-                  placeholder="Suggestions, feedback, and rubric comments..."
+                  placeholder={t('assignmentDetail.feedbackPlaceholder')}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
@@ -400,13 +406,13 @@ export const AssignmentDetail: React.FC = () => {
                   onClick={() => setGradeModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Simpan Nilai
+                  {t('assignmentDetail.saveGrade')}
                 </button>
               </div>
             </form>

@@ -11,6 +11,7 @@ import {
   Printer,
   X,
 } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 export const Students: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -29,6 +30,7 @@ export const Students: React.FC = () => {
   const [importResult, setImportResult] = useState<any>(null);
 
   const { impersonate } = useAuthStore();
+  const { t } = useI18n();
 
   const [form, setForm] = useState({
     name: '',
@@ -84,7 +86,7 @@ export const Students: React.FC = () => {
       });
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create student');
+      alert(err.response?.data?.message || t('students.createFailed'));
     }
   };
 
@@ -106,7 +108,7 @@ export const Students: React.FC = () => {
       setImportResult(res.data.data);
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to import Excel');
+      alert(err.response?.data?.message || t('students.importFailed'));
     } finally {
       setImportLoading(false);
     }
@@ -119,12 +121,12 @@ export const Students: React.FC = () => {
       setExamCards(res.data.data);
       setCardModalOpen(true);
     } catch (err: any) {
-      alert('Failed to load exam cards');
+      alert(t('students.cardsFailed'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Delete student record?')) {
+    if (confirm(t('students.confirmDelete'))) {
       await api.delete(`/students/${id}`);
       loadData();
     }
@@ -134,8 +136,8 @@ export const Students: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Student Management</h2>
-          <p className="text-xs text-slate-500 mt-1">NIS registration, bulk Excel batch onboarding, and CBT exam cards</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('students.title')}</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('students.subtitle')}</p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2">
@@ -144,7 +146,7 @@ export const Students: React.FC = () => {
             onChange={(e) => setSelectedClassroom(e.target.value)}
             className="bg-white border border-slate-300 text-slate-700 text-xs font-medium rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-xs"
           >
-            <option value="">All Classrooms</option>
+            <option value="">{t('students.allClassrooms')}</option>
             {classrooms.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -157,7 +159,7 @@ export const Students: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Printer className="w-4 h-4" />
-            <span>Print Cards</span>
+            <span>{t('students.printCards')}</span>
           </button>
 
           <button
@@ -169,7 +171,7 @@ export const Students: React.FC = () => {
             className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <UploadCloud className="w-4 h-4" />
-            <span>Import Excel</span>
+            <span>{t('students.importExcel')}</span>
           </button>
 
           <button
@@ -177,31 +179,31 @@ export const Students: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Tambah Siswa</span>
+            <span>{t('students.addStudent')}</span>
           </button>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Memuat data siswa...</div>
+          <div className="p-8 text-center text-slate-500">{t('students.loading')}</div>
         ) : students.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">Belum ada siswa terdaftar</p>
-            <p className="text-xs mt-1 text-slate-400">Gunakan "Import Excel" untuk unggah data siswa secara massal.</p>
+            <p className="text-base font-medium">{t('students.emptyTitle')}</p>
+            <p className="text-xs mt-1 text-slate-400">{t('students.emptyHint')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm min-w-[700px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Nama Siswa</th>
+                  <th className="px-6 py-4">{t('students.colName')}</th>
                   <th className="px-6 py-4">NIS / NISN</th>
-                  <th className="px-6 py-4">Jenis Kelamin</th>
-                  <th className="px-6 py-4">Kelas</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4 text-right">Aksi</th>
+                  <th className="px-6 py-4">{t('students.gender')}</th>
+                  <th className="px-6 py-4">{t('students.classroom')}</th>
+                  <th className="px-6 py-4">{t('common.email')}</th>
+                  <th className="px-6 py-4 text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -218,26 +220,26 @@ export const Students: React.FC = () => {
                           s.gender === 'M' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700'
                         }`}
                       >
-                        {s.gender === 'M' ? 'Laki-laki' : 'Perempuan'}
+                        {s.gender === 'M' ? t('students.male') : t('students.female')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-600">
-                      {s.classroomName || <span className="text-slate-400 italic">Belum ada kelas</span>}
+                      {s.classroomName || <span className="text-slate-400 italic">{t('students.noClassroom')}</span>}
                     </td>
                     <td className="px-6 py-4 text-slate-600">{s.email}</td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
                         onClick={() => impersonate(s.userId)}
-                        title="Masuk sebagai Siswa"
+                        title={t('students.loginAsTitle')}
                         className="inline-flex items-center space-x-1 text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg text-xs font-semibold border border-amber-200 transition cursor-pointer"
                       >
                         <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
-                        <span>Login As</span>
+                        <span>{t('students.loginAs')}</span>
                       </button>
                       <button
                         onClick={() => handleDelete(s.id)}
                         className="text-slate-500 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                        title="Hapus Siswa"
+                        title={t('students.deleteTitle')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -257,18 +259,19 @@ export const Students: React.FC = () => {
             <button
               onClick={() => setModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Register Student Account</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('students.modalTitle')}</h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('students.fullName')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Siti Nurhaliza"
+                  placeholder={t('students.namePlaceholder')}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -301,24 +304,24 @@ export const Students: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Gender</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('students.gender')}</label>
                   <select
                     value={form.gender}
                     onChange={(e) => setForm({ ...form, gender: e.target.value as 'M' | 'F' })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="M">Laki-laki (M)</option>
-                    <option value="F">Perempuan (F)</option>
+                    <option value="M">{t('students.maleOption')}</option>
+                    <option value="F">{t('students.femaleOption')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Classroom</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('students.classroom')}</label>
                   <select
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">-- Choose Classroom --</option>
+                    <option value="">{t('students.selectClassroom')}</option>
                     {classrooms.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -330,21 +333,21 @@ export const Students: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Email</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('common.email')}</label>
                   <input
                     type="email"
                     required
-                    placeholder="student@school.com"
+                    placeholder={t('students.emailPlaceholder')}
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Initial Password</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('students.initialPassword')}</label>
                   <input
                     type="password"
-                    placeholder="Defaults to Student@123"
+                    placeholder={t('students.passwordPlaceholder')}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -358,13 +361,13 @@ export const Students: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Simpan Siswa
+                  {t('students.saveStudent')}
                 </button>
               </div>
             </form>
@@ -379,12 +382,13 @@ export const Students: React.FC = () => {
             <button
               onClick={() => setImportModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Import Students via Excel</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{t('students.importTitle')}</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Upload an <code>.xlsx</code> spreadsheet with columns:{' '}
+              {t('students.importHintBefore')} <code>.xlsx</code> {t('students.importHintAfter')}{' '}
               <strong>Name, Email, NIS, NISN, Gender (M/F), Phone, Address</strong>.
             </p>
 
@@ -403,11 +407,11 @@ export const Students: React.FC = () => {
               {importResult && (
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                   <div className="font-bold text-emerald-700">
-                    Successfully imported: {importResult.successCount} students
+                    {t('students.importSuccess', { count: importResult.successCount })}
                   </div>
                   {importResult.errorCount > 0 && (
                     <div className="font-bold text-rose-600 mt-1">
-                      Failed rows: {importResult.errorCount}
+                      {t('students.importFailedRows', { count: importResult.errorCount })}
                       <ul className="list-disc pl-4 font-normal mt-1 text-rose-500 space-y-0.5">
                         {importResult.errors?.map((err: string, i: number) => (
                           <li key={i}>{err}</li>
@@ -424,14 +428,14 @@ export const Students: React.FC = () => {
                   onClick={() => setImportModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Close
+                  {t('common.close')}
                 </button>
                 <button
                   type="submit"
                   disabled={importLoading || !excelFile}
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {importLoading ? 'Processing Spreadsheet...' : 'Start Import'}
+                  {importLoading ? t('students.importProcessing') : t('students.importStart')}
                 </button>
               </div>
             </form>
@@ -445,19 +449,20 @@ export const Students: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col p-6 shadow-2xl relative">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Student CBT Examination Cards</h3>
-                <p className="text-xs text-slate-500">Official student exam hall tickets with NIS barcode verification</p>
+                <h3 className="text-lg font-bold text-slate-900">{t('students.cardsTitle')}</h3>
+                <p className="text-xs text-slate-500">{t('students.cardsSubtitle')}</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => window.print()}
                   className="bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-emerald-500 transition cursor-pointer"
                 >
-                  Print View
+                  {t('students.printView')}
                 </button>
                 <button
                   onClick={() => setCardModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  aria-label={t('common.close')}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -474,22 +479,22 @@ export const Students: React.FC = () => {
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
                       <div>
                         <div className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-                          KARTU PESERTA UJIAN CBT
+                          {t('students.cardHeading')}
                         </div>
-                        <div className="text-[10px] text-slate-500">Tahun Ajaran {c.academicYear}</div>
+                        <div className="text-[10px] text-slate-500">{t('students.cardAcademicYear', { year: c.academicYear })}</div>
                       </div>
                       <div className="text-xs font-mono font-bold text-slate-700">{c.classroomName}</div>
                     </div>
 
                     <div className="space-y-1 text-xs text-slate-700">
                       <div>
-                        <strong>Nama:</strong> {c.name}
+                        <strong>{t('students.cardName')}</strong> {c.name}
                       </div>
                       <div>
                         <strong>NIS:</strong> {c.nis} / <strong>NISN:</strong> {c.nisn || '-'}
                       </div>
                       <div>
-                        <strong>Gender:</strong> {c.gender === 'M' ? 'Laki-laki' : 'Perempuan'}
+                        <strong>{t('students.cardGender')}</strong> {c.gender === 'M' ? t('students.male') : t('students.female')}
                       </div>
                     </div>
                   </div>
@@ -500,7 +505,7 @@ export const Students: React.FC = () => {
                       <div className="text-[9px] text-slate-400">{c.barcodeData}</div>
                     </div>
                     <div className="text-[10px] text-center border-t border-slate-400 w-24 pt-0.5">
-                      Panitia Ujian
+                      {t('students.cardCommittee')}
                     </div>
                   </div>
                 </div>

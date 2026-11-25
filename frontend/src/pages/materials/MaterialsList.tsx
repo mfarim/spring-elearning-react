@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n';
 
 export const MaterialsList: React.FC = () => {
   const [materials, setMaterials] = useState<LearningMaterial[]>([]);
@@ -21,6 +22,7 @@ export const MaterialsList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const { user } = useAuthStore();
+  const { t } = useI18n();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -100,12 +102,12 @@ export const MaterialsList: React.FC = () => {
       });
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create material');
+      alert(err.response?.data?.message || t('materialsList.createFailed'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Delete this learning material?')) {
+    if (confirm(t('materialsList.confirmDelete'))) {
       await api.delete(`/materials/${id}`);
       loadData();
     }
@@ -115,8 +117,8 @@ export const MaterialsList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Materi Pembelajaran</h2>
-          <p className="text-xs text-slate-500 mt-1">Modul silabus digital, panduan bacaan, dan berkas materi kuliah</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('materialsList.title')}</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('materialsList.subtitle')}</p>
         </div>
 
         {(isAdmin || isTeacher) && (
@@ -125,18 +127,18 @@ export const MaterialsList: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Unggah Materi</span>
+            <span>{t('materialsList.uploadButton')}</span>
           </button>
         )}
       </div>
 
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading learning materials...</div>
+        <div className="p-8 text-center text-slate-500">{t('materialsList.loading')}</div>
       ) : materials.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 shadow-xs">
           <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-base font-medium">No learning materials published yet</p>
-          <p className="text-xs mt-1 text-slate-400">Instructors can publish course readings and modules here.</p>
+          <p className="text-base font-medium">{t('materialsList.emptyTitle')}</p>
+          <p className="text-xs mt-1 text-slate-400">{t('materialsList.emptyText')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -152,16 +154,16 @@ export const MaterialsList: React.FC = () => {
                   </span>
                   <div className="flex items-center space-x-2 text-xs text-slate-400">
                     <Eye className="w-3.5 h-3.5" />
-                    <span>{m.totalViews} dilihat</span>
+                    <span>{t('materialsList.views', { count: m.totalViews })}</span>
                   </div>
                 </div>
 
                 <h3 className="text-base font-bold text-slate-900 line-clamp-1">{m.title}</h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{m.description || 'Tidak ada deskripsi.'}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{m.description || t('materialsList.noDescription')}</p>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>Kelas: <strong>{m.classroomName || 'Semua'}</strong></span>
-                  <span>Oleh: <strong>{m.teacherName}</strong></span>
+                  <span>{t('materialsList.classLabel')} <strong>{m.classroomName || t('materialsList.allClasses')}</strong></span>
+                  <span>{t('materialsList.byLabel')} <strong>{m.teacherName}</strong></span>
                 </div>
               </div>
 
@@ -171,19 +173,21 @@ export const MaterialsList: React.FC = () => {
                   className="inline-flex items-center space-x-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>Buka Materi</span>
+                  <span>{t('materialsList.openMaterial')}</span>
                 </Link>
 
                 <div className="flex items-center space-x-2">
                   {m.hasViewed && (
                     <span className="inline-flex items-center text-xs text-emerald-600 font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                      Completed
+                      {t('materialsList.completed')}
                     </span>
                   )}
                   {(isAdmin || isTeacher) && (
                     <button
                       onClick={() => handleDelete(m.id)}
+                      title={t('materialsList.deleteTitle')}
+                      aria-label={t('materialsList.deleteTitle')}
                       className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -202,19 +206,20 @@ export const MaterialsList: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative">
             <button
               onClick={() => setModalOpen(false)}
+              aria-label={t('common.close')}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Publish Learning Material</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('materialsList.modalTitle')}</h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Material Title</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldTitle')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Bab 1: Persamaan Linier dan Kuadrat"
+                  placeholder={t('materialsList.fieldTitlePlaceholder')}
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -223,14 +228,14 @@ export const MaterialsList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Subject</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldSubject')}</label>
                   <select
                     required
                     value={form.subjectId}
                     onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">-- Choose Subject --</option>
+                    <option value="">{t('materialsList.chooseSubject')}</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} ({s.code})
@@ -239,13 +244,13 @@ export const MaterialsList: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Target Classroom</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldClassroom')}</label>
                   <select
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">All Classrooms</option>
+                    <option value="">{t('materialsList.allClassrooms')}</option>
                     {classrooms.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -257,19 +262,19 @@ export const MaterialsList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Content Type</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldType')}</label>
                   <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="PDF">PDF Document</option>
-                    <option value="ARTICLE">Article / Text</option>
-                    <option value="VIDEO">Video Link</option>
+                    <option value="PDF">{t('materialsList.typePdf')}</option>
+                    <option value="ARTICLE">{t('materialsList.typeArticle')}</option>
+                    <option value="VIDEO">{t('materialsList.typeVideo')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Attachment File</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldFile')}</label>
                   <input
                     type="file"
                     onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
@@ -279,24 +284,24 @@ export const MaterialsList: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Summary Description</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldDescription')}</label>
                 <textarea
                   rows={2}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Short description of the topic..."
+                  placeholder={t('materialsList.fieldDescriptionPlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Detailed Content</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('materialsList.fieldContent')}</label>
                 <textarea
                   rows={4}
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Markdown or lecture text..."
+                  placeholder={t('materialsList.fieldContentPlaceholder')}
                 />
               </div>
 
@@ -306,13 +311,13 @@ export const MaterialsList: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Publikasikan Materi
+                  {t('materialsList.publishButton')}
                 </button>
               </div>
             </form>

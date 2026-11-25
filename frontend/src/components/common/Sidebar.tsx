@@ -14,6 +14,7 @@ import {
   Award,
   X,
 } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 interface SidebarProps {
   closeMobileMenu?: () => void;
@@ -21,6 +22,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
   const { user } = useAuthStore();
+  const { t } = useI18n();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -32,9 +34,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
     }`;
 
   const getRoleLabel = () => {
-    if (isAdmin) return 'Administrator';
-    if (isTeacher) return 'Guru Pengajar';
-    return 'Siswa';
+    if (isAdmin) return t('common.roleAdministrator');
+    if (isTeacher) return t('nav.roleTeacherLong');
+    return t('common.roleStudent');
   };
 
   return (
@@ -44,11 +46,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
         <div className="flex items-center gap-3">
           <img
             src="/logo.png"
-            alt="Spring E-Learning Logo"
+            alt={t('common.logoAlt')}
             className="w-9 h-9 rounded-xl object-cover shadow-xs border border-white/20"
           />
           <span className="text-base font-bold text-white tracking-tight">
-            Spring E-Learning
+            {t('common.appName')}
           </span>
         </div>
         {closeMobileMenu && (
@@ -56,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
             type="button"
             onClick={closeMobileMenu}
             className="md:hidden p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-white/10 transition"
-            aria-label="Close sidebar"
+            aria-label={t('nav.closeSidebar')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -68,12 +70,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
         {/* Main Menu */}
         <div>
           <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300/60">
-            Menu Utama
+            {t('nav.sectionMain')}
           </p>
           <div className="space-y-0.5">
             <NavLink to="/dashboard" onClick={closeMobileMenu} className={navClass}>
               <LayoutDashboard className="w-5 h-5" />
-              <span>Dashboard</span>
+              <span>{t('nav.dashboard')}</span>
             </NavLink>
           </div>
         </div>
@@ -82,28 +84,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
         {isAdmin && (
           <div>
             <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300/60">
-              Manajemen & User
+              {t('nav.sectionManagement')}
             </p>
             <div className="space-y-0.5">
               <NavLink to="/teachers" onClick={closeMobileMenu} className={navClass}>
                 <UserCheck className="w-5 h-5" />
-                <span>Guru</span>
+                <span>{t('nav.teachers')}</span>
               </NavLink>
               <NavLink to="/students" onClick={closeMobileMenu} className={navClass}>
                 <Users className="w-5 h-5" />
-                <span>Siswa</span>
+                <span>{t('nav.students')}</span>
               </NavLink>
               <NavLink to="/classrooms" onClick={closeMobileMenu} className={navClass}>
                 <GraduationCap className="w-5 h-5" />
-                <span>Kelas</span>
+                <span>{t('nav.classrooms')}</span>
               </NavLink>
               <NavLink to="/subjects" onClick={closeMobileMenu} className={navClass}>
                 <BookMarked className="w-5 h-5" />
-                <span>Mata Pelajaran</span>
+                <span>{t('nav.subjects')}</span>
               </NavLink>
               <NavLink to="/announcements" onClick={closeMobileMenu} className={navClass}>
                 <Bell className="w-5 h-5" />
-                <span>Pengumuman</span>
+                <span>{t('nav.announcements')}</span>
               </NavLink>
             </div>
           </div>
@@ -112,25 +114,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ closeMobileMenu }) => {
         {/* Academic & Learning CBT */}
         <div>
           <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300/60">
-            Akademik & CBT
+            {t('nav.sectionAcademic')}
           </p>
           <div className="space-y-0.5">
             <NavLink to="/exams" onClick={closeMobileMenu} className={navClass}>
               <FileCheck2 className="w-5 h-5" />
-              <span>{isTeacher || isAdmin ? 'Ujian & CBT' : 'Ujian Saya'}</span>
+              <span>{isTeacher || isAdmin ? t('nav.examsManage') : t('nav.examsMine')}</span>
             </NavLink>
             <NavLink to="/materials" onClick={closeMobileMenu} className={navClass}>
               <FileText className="w-5 h-5" />
-              <span>Materi Belajar</span>
+              <span>{t('nav.materials')}</span>
             </NavLink>
             <NavLink to="/assignments" onClick={closeMobileMenu} className={navClass}>
               <MessageSquareShare className="w-5 h-5" />
-              <span>Tugas & Forum</span>
+              <span>{t('nav.assignments')}</span>
             </NavLink>
             {!isAdmin && !isTeacher && (
               <NavLink to="/grades" onClick={closeMobileMenu} className={navClass}>
                 <Award className="w-5 h-5" />
-                <span>Nilai & Rapor</span>
+                <span>{t('nav.grades')}</span>
               </NavLink>
             )}
           </div>

@@ -14,10 +14,12 @@ import {
   Users,
   CheckCircle2,
 } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 export const MaterialDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { t, locale } = useI18n();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -52,15 +54,15 @@ export const MaterialDetail: React.FC = () => {
   }, [id, isAdmin, isTeacher]);
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Loading module...</div>;
+    return <div className="p-8 text-center text-slate-500">{t('materialDetail.loading')}</div>;
   }
 
   if (!material) {
     return (
       <div className="p-12 text-center text-slate-500">
-        <p>Material not found.</p>
+        <p>{t('materialDetail.notFound')}</p>
         <Link to="/materials" className="text-emerald-600 hover:text-emerald-700 font-semibold mt-2 inline-block">
-          Back to Materials
+          {t('materialDetail.backToMaterialsShort')}
         </Link>
       </div>
     );
@@ -73,7 +75,7 @@ export const MaterialDetail: React.FC = () => {
         className="inline-flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-800 transition"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to materials</span>
+        <span>{t('materialDetail.backToMaterials')}</span>
       </Link>
 
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
@@ -84,7 +86,7 @@ export const MaterialDetail: React.FC = () => {
             </span>
             <div className="flex items-center space-x-2 text-xs text-slate-400">
               <Eye className="w-4 h-4" />
-              <span>{material.totalViews} views</span>
+              <span>{t('materialDetail.views', { count: material.totalViews })}</span>
             </div>
           </div>
 
@@ -94,15 +96,15 @@ export const MaterialDetail: React.FC = () => {
           <div className="flex items-center flex-wrap gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
             <div className="flex items-center space-x-1">
               <User className="w-4 h-4 text-slate-400" />
-              <span>Guru Pengampu: <strong>{material.teacherName}</strong></span>
+              <span>{t('materialDetail.teacherLabel')} <strong>{material.teacherName}</strong></span>
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4 text-slate-400" />
-              <span>Kelas: <strong>{material.classroomName || 'Semua Kelas'}</strong></span>
+              <span>{t('materialDetail.classLabel')} <strong>{material.classroomName || t('materialDetail.allClasses')}</strong></span>
             </div>
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4 text-slate-400" />
-              <span>Dipublikasikan: {new Date(material.createdAt).toLocaleDateString()}</span>
+              <span>{t('materialDetail.publishedOn', { date: new Date(material.createdAt).toLocaleDateString(locale) })}</span>
             </div>
           </div>
         </div>
@@ -122,8 +124,8 @@ export const MaterialDetail: React.FC = () => {
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-800">Berkas Lampiran ({material.type})</p>
-                <p className="text-xs text-slate-500">Unduh atau buka modul silabus pembelajaran</p>
+                <p className="text-sm font-bold text-slate-800">{t('materialDetail.attachmentTitle', { type: material.type })}</p>
+                <p className="text-xs text-slate-500">{t('materialDetail.attachmentText')}</p>
               </div>
             </div>
             {isProtectedFileUrl(material.fileUrl) ? (
@@ -133,7 +135,7 @@ export const MaterialDetail: React.FC = () => {
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition cursor-pointer self-start sm:self-auto"
               >
                 <Download className="w-4 h-4" />
-                <span>Buka Dokumen</span>
+                <span>{t('materialDetail.openDocument')}</span>
               </button>
             ) : isSafeExternalUrl(material.fileUrl) ? (
               <a
@@ -143,10 +145,10 @@ export const MaterialDetail: React.FC = () => {
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition self-start sm:self-auto"
               >
                 <Download className="w-4 h-4" />
-                <span>Buka Dokumen</span>
+                <span>{t('materialDetail.openDocument')}</span>
               </a>
             ) : (
-              <span className="text-xs text-slate-500">Tautan lampiran tidak valid</span>
+              <span className="text-xs text-slate-500">{t('materialDetail.invalidLink')}</span>
             )}
           </div>
         )}
@@ -158,12 +160,12 @@ export const MaterialDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              <span>Student Reading Activity ({viewers.length} Completed)</span>
+              <span>{t('materialDetail.readingActivity', { count: viewers.length })}</span>
             </h3>
           </div>
 
           {viewers.length === 0 ? (
-            <p className="text-xs text-slate-400 italic">No students have accessed this material yet.</p>
+            <p className="text-xs text-slate-400 italic">{t('materialDetail.noViewers')}</p>
           ) : (
             <div className="divide-y divide-slate-100 text-xs">
               {viewers.map((v) => (
@@ -173,7 +175,7 @@ export const MaterialDetail: React.FC = () => {
                     <span className="font-mono text-slate-400 ml-2">({v.nis})</span>
                   </div>
                   <div className="text-slate-400">
-                    {new Date(v.viewedAt).toLocaleString()}
+                    {new Date(v.viewedAt).toLocaleString(locale)}
                   </div>
                 </div>
               ))}

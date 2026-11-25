@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import api from '../../api/client';
-import type { Exam, ExamMonitorItem, ApiResponse } from '../../types';
+import type { Exam, ExamMonitorItem, ApiResponse, AttemptStatus } from '../../types';
 import {
   ArrowLeft,
   MonitorPlay,
@@ -13,14 +13,29 @@ import {
   Radio,
   RefreshCw,
 } from 'lucide-react';
+import { useI18n, type MessageKey } from '../../i18n';
+
+/** Violation codes sent by the exam runner; unknown codes are shown as they are. */
+const VIOLATION_REASON_LABELS: Record<string, MessageKey> = {
+  TAB_SWITCH_OR_MINIMIZED: 'examMonitor.reasonTabSwitch',
+};
+
+const ATTEMPT_STATUS_LABELS: Record<AttemptStatus, MessageKey> = {
+  in_progress: 'examMonitor.statusInProgress',
+  submitted: 'examMonitor.statusSubmitted',
+  needs_grading: 'examMonitor.statusNeedsGrading',
+  completed: 'examMonitor.statusCompleted',
+};
 
 export const ExamMonitor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { t, locale } = useI18n();
   const [exam, setExam] = useState<Exam | null>(null);
   const [attempts, setAttempts] = useState<ExamMonitorItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [wsConnected, setWsConnected] = useState(false);
-  const [recentAlert, setRecentAlert] = useState<string | null>(null);
+  // Kept as data, not text, so the banner follows the current language.
+  const [recentAlert, setRecentAlert] = useState<{ studentName: string; reason: string } | null>(null);
 
   const stompClientRef = useRef<Client | null>(null);
 
@@ -83,7 +98,7 @@ export const ExamMonitor: React.FC = () => {
     const { eventType, data } = event;
 
     if (eventType === 'VIOLATION_REPORTED') {
-      setRecentAlert(`🚨 VIOLATION: Student ${data.studentName} flagged for ${data.reason}!`);
+      setRecentAlert({ studentName: String(data.studentName ?? ''), reason: String(data.reason ?? '') });
       setTimeout(() => setRecentAlert(null), 6000);
     }
 
@@ -105,7 +120,7 @@ export const ExamMonitor: React.FC = () => {
           className="inline-flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-800 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Examinations</span>
+          <span>{t('examMonitor.backToExams')}</span>
         </Link>
 
         <div className="flex items-center space-x-3">
@@ -117,11 +132,13 @@ export const ExamMonitor: React.FC = () => {
             }`}
           >
             <Radio className={`w-3.5 h-3.5 ${wsConnected ? 'text-emerald-500 animate-ping' : ''}`} />
-            <span>{wsConnected ? 'Live Telemetry Active' : 'Connecting WebSocket...'}</span>
+            <span>{wsConnected ? t('examMonitor.liveActive') : t('examMonitor.connecting')}</span>
           </div>
 
           <button
             onClick={() => loadData()}
+            title={t('examMonitor.refresh')}
+            aria-label={t('examMonitor.refresh')}
             className="p-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-600 transition shadow-xs cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
@@ -132,7 +149,14 @@ export const ExamMonitor: React.FC = () => {
       {recentAlert && (
         <div className="bg-rose-500 text-white px-5 py-3 rounded-2xl shadow-lg shadow-rose-500/25 flex items-center space-x-3 text-sm font-bold animate-bounce">
           <AlertTriangle className="w-5 h-5 shrink-0" />
-          <span>{recentAlert}</span>
+          <span>
+            {t('examMonitor.violationAlert', {
+              name: recentAlert.studentName,
+              reason: VIOLATION_REASON_LABELS[recentAlert.reason]
+                ? t(VIOLATION_REASON_LABELS[recentAlert.reason])
+                : recentAlert.reason,
+            })}
+          </span>
         </div>
       )}
 
@@ -143,12 +167,12 @@ export const ExamMonitor: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
                 {exam.subjectName}
               </span>
-              <span className="text-xs text-slate-400">Class: {exam.classroomName}</span>
+              <span className="text-xs text-slate-400">{t('examMonitor.classLabel', { name: exam.classroomName })}</span>
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mt-2">{exam.title}</h2>
           </div>
           <div className="text-left sm:text-right">
-            <span className="text-xs font-medium text-slate-400">Exam Pass Mark</span>
+            <span className="text-xs font-medium text-slate-400">{t('examMonitor.passMark')}</span>
             <div className="text-xl font-bold text-emerald-600">{exam.passingScore}%</div>
           </div>
         </div>
@@ -161,8 +185,8 @@ export const ExamMonitor: React.FC = () => {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Actively Taking Exam</p>
-            <h3 className="text-2xl font-bold text-slate-800">{activeCount} students</h3>
+            <p className="text-xs font-medium text-slate-500">{t('examMonitor.activeTitle')}</p>
+            <h3 className="text-2xl font-bold text-slate-800">{activeCount === 1 ? t('examMonitor.studentOne') : t('examMonitor.studentCount', { count: activeCount })}</h3>
           </div>
         </div>
 
@@ -171,8 +195,8 @@ export const ExamMonitor: React.FC = () => {
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Submitted & Completed</p>
-            <h3 className="text-2xl font-bold text-slate-800">{completedCount} students</h3>
+            <p className="text-xs font-medium text-slate-500">{t('examMonitor.completedTitle')}</p>
+            <h3 className="text-2xl font-bold text-slate-800">{completedCount === 1 ? t('examMonitor.studentOne') : t('examMonitor.studentCount', { count: completedCount })}</h3>
           </div>
         </div>
 
@@ -181,8 +205,8 @@ export const ExamMonitor: React.FC = () => {
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Proctoring Violations</p>
-            <h3 className="text-2xl font-bold text-rose-600">{totalViolations} flags</h3>
+            <p className="text-xs font-medium text-slate-500">{t('examMonitor.violationsTitle')}</p>
+            <h3 className="text-2xl font-bold text-rose-600">{totalViolations === 1 ? t('examMonitor.flagOne') : t('examMonitor.flagCount', { count: totalViolations })}</h3>
           </div>
         </div>
       </div>
@@ -192,30 +216,30 @@ export const ExamMonitor: React.FC = () => {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
             <MonitorPlay className="w-5 h-5 text-emerald-600" />
-            <span>Real-time Candidate Telemetry</span>
+            <span>{t('examMonitor.tableTitle')}</span>
           </h3>
-          <span className="text-xs text-slate-400">Total Enrolled: {attempts.length}</span>
+          <span className="text-xs text-slate-400">{t('examMonitor.totalEnrolled', { count: attempts.length })}</span>
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading telemetry data...</div>
+          <div className="p-8 text-center text-slate-500">{t('examMonitor.loading')}</div>
         ) : attempts.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-medium">No candidate sessions active</p>
-            <p className="text-xs mt-1 text-slate-400">Students entering the CBT room will automatically appear here.</p>
+            <p className="text-base font-medium">{t('examMonitor.emptyTitle')}</p>
+            <p className="text-xs mt-1 text-slate-400">{t('examMonitor.emptyText')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm min-w-[650px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Student</th>
-                  <th className="px-6 py-4">Session Status</th>
-                  <th className="px-6 py-4">Questions Progress</th>
-                  <th className="px-6 py-4">Violations</th>
-                  <th className="px-6 py-4">Score</th>
-                  <th className="px-6 py-4 text-right">Started At</th>
+                  <th className="px-6 py-4">{t('examMonitor.colStudent')}</th>
+                  <th className="px-6 py-4">{t('examMonitor.colStatus')}</th>
+                  <th className="px-6 py-4">{t('examMonitor.colProgress')}</th>
+                  <th className="px-6 py-4">{t('examMonitor.colViolations')}</th>
+                  <th className="px-6 py-4">{t('examMonitor.colScore')}</th>
+                  <th className="px-6 py-4 text-right">{t('examMonitor.colStartedAt')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -223,7 +247,7 @@ export const ExamMonitor: React.FC = () => {
                   <tr key={att.attemptId} className="hover:bg-slate-50/80 transition">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900">{att.studentName}</div>
-                      <div className="text-xs font-mono text-slate-400">NIS: {att.nis}</div>
+                      <div className="text-xs font-mono text-slate-400">{t('examMonitor.nis', { nis: att.nis })}</div>
                     </td>
 
                     <td className="px-6 py-4">
@@ -236,7 +260,7 @@ export const ExamMonitor: React.FC = () => {
                             : 'bg-slate-100 text-slate-700'
                         }`}
                       >
-                        {att.status.replace('_', ' ')}
+                        {ATTEMPT_STATUS_LABELS[att.status] ? t(ATTEMPT_STATUS_LABELS[att.status]) : att.status}
                       </span>
                     </td>
 
@@ -260,10 +284,10 @@ export const ExamMonitor: React.FC = () => {
                       {att.violations > 0 ? (
                         <span className="inline-flex items-center space-x-1 bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-lg">
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>{att.violations} Warning{att.violations > 1 ? 's' : ''}</span>
+                          <span>{att.violations === 1 ? t('examMonitor.warningOne') : t('examMonitor.warningCount', { count: att.violations })}</span>
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400">0 Flags</span>
+                        <span className="text-xs text-slate-400">{t('examMonitor.noFlags')}</span>
                       )}
                     </td>
 
@@ -273,12 +297,12 @@ export const ExamMonitor: React.FC = () => {
                           {att.score} / 100
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400 italic">In progress</span>
+                        <span className="text-xs text-slate-400 italic">{t('examMonitor.inProgress')}</span>
                       )}
                     </td>
 
                     <td className="px-6 py-4 text-right text-xs text-slate-500">
-                      {new Date(att.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      {new Date(att.startedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </td>
                   </tr>
                 ))}

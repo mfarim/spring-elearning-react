@@ -12,6 +12,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n';
 
 export const AssignmentList: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -21,6 +22,7 @@ export const AssignmentList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const { user } = useAuthStore();
+  const { t, locale } = useI18n();
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -76,12 +78,12 @@ export const AssignmentList: React.FC = () => {
       setModalOpen(false);
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create assignment');
+      alert(err.response?.data?.message || t('assignmentList.createFailed'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Delete this assignment?')) {
+    if (confirm(t('assignmentList.confirmDelete'))) {
       await api.delete(`/assignments/${id}`);
       loadData();
     }
@@ -91,8 +93,8 @@ export const AssignmentList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Tugas & PR Siswa</h2>
-          <p className="text-xs text-slate-500 mt-1">Kumpulkan tugas, terima penilaian guru, dan ikuti forum diskusi</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('assignmentList.title')}</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('assignmentList.subtitle')}</p>
         </div>
 
         {(isAdmin || isTeacher) && (
@@ -101,18 +103,18 @@ export const AssignmentList: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Buat Tugas Baru</span>
+            <span>{t('assignmentList.createButton')}</span>
           </button>
         )}
       </div>
 
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading assignments...</div>
+        <div className="p-8 text-center text-slate-500">{t('assignmentList.loading')}</div>
       ) : assignments.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 shadow-xs">
           <MessageSquareShare className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-base font-medium">No assignments currently active</p>
-          <p className="text-xs mt-1 text-slate-400">Instructors can create assignments for enrolled classes here.</p>
+          <p className="text-base font-medium">{t('assignmentList.emptyTitle')}</p>
+          <p className="text-xs mt-1 text-slate-400">{t('assignmentList.emptyText')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -126,17 +128,17 @@ export const AssignmentList: React.FC = () => {
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                     {a.subjectName}
                   </span>
-                  <span className="text-xs font-medium text-slate-500">Max: {a.maxScore} poin</span>
+                  <span className="text-xs font-medium text-slate-500">{t('assignmentList.maxPoints', { score: a.maxScore })}</span>
                 </div>
 
                 <h3 className="text-base font-bold text-slate-900 line-clamp-1">{a.title}</h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{a.description || 'Tidak ada deskripsi.'}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{a.description || t('assignmentList.noDescription')}</p>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>Kelas: <strong>{a.classroomName}</strong></span>
+                  <span>{t('assignmentList.classLabel')} <strong>{a.classroomName}</strong></span>
                   <div className="flex items-center space-x-1 text-amber-700 font-semibold">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>Batas: {new Date(a.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{t('assignmentList.dueLabel', { date: new Date(a.dueDate).toLocaleDateString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) })}</span>
                   </div>
                 </div>
               </div>
@@ -147,20 +149,22 @@ export const AssignmentList: React.FC = () => {
                   className="inline-flex items-center space-x-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>Detail & Pengumpulan</span>
+                  <span>{t('assignmentList.detailLink')}</span>
                 </Link>
 
                 <div className="flex items-center space-x-2">
                   {a.hasSubmitted && (
                     <span className="inline-flex items-center text-xs text-emerald-600 font-semibold">
                       <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                      Submitted {a.studentScore !== null && a.studentScore !== undefined ? `(${a.studentScore}/${a.maxScore})` : ''}
+                      {t('assignmentList.submitted')} {a.studentScore !== null && a.studentScore !== undefined ? `(${a.studentScore}/${a.maxScore})` : ''}
                     </span>
                   )}
 
                   {(isAdmin || isTeacher) && (
                     <button
                       onClick={() => handleDelete(a.id)}
+                      title={t('assignmentList.deleteTitle')}
+                      aria-label={t('assignmentList.deleteTitle')}
                       className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -179,19 +183,20 @@ export const AssignmentList: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative">
             <button
               onClick={() => setModalOpen(false)}
+              aria-label={t('common.close')}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Create Assignment</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('assignmentList.modalTitle')}</h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Assignment Title</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('assignmentList.fieldTitle')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Tugas Mandiri 1: Pemrograman Berorientasi Objek"
+                  placeholder={t('assignmentList.fieldTitlePlaceholder')}
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -200,14 +205,14 @@ export const AssignmentList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Subject</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('assignmentList.fieldSubject')}</label>
                   <select
                     required
                     value={form.subjectId}
                     onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">-- Choose Subject --</option>
+                    <option value="">{t('assignmentList.chooseSubject')}</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
@@ -216,14 +221,14 @@ export const AssignmentList: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Classroom</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('assignmentList.fieldClassroom')}</label>
                   <select
                     required
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">-- Choose Classroom --</option>
+                    <option value="">{t('assignmentList.chooseClassroom')}</option>
                     {classrooms.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -235,7 +240,7 @@ export const AssignmentList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Due Date & Time</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('assignmentList.fieldDueDate')}</label>
                   <input
                     type="datetime-local"
                     required
@@ -245,7 +250,7 @@ export const AssignmentList: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Max Score</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('assignmentList.fieldMaxScore')}</label>
                   <input
                     type="number"
                     required
@@ -259,13 +264,13 @@ export const AssignmentList: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Instructions</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('assignmentList.fieldInstructions')}</label>
                 <textarea
                   rows={3}
                   value={form.instructions}
                   onChange={(e) => setForm({ ...form, instructions: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                  placeholder="Task instructions and guidelines..."
+                  placeholder={t('assignmentList.fieldInstructionsPlaceholder')}
                 />
               </div>
 
@@ -275,13 +280,13 @@ export const AssignmentList: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Publikasikan Tugas
+                  {t('assignmentList.publishButton')}
                 </button>
               </div>
             </form>

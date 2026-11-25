@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { LogOut, UserCheck, ShieldAlert, Menu, X, KeyRound } from 'lucide-react';
+import { useI18n } from '../../i18n';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface NavbarProps {
   onToggleMobileMenu?: () => void;
@@ -10,26 +12,27 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen }) => {
   const { user, logout, stopImpersonate } = useAuthStore();
+  const { t } = useI18n();
 
   const getRoleBadge = () => {
     if (!user) return null;
     if (user.roles.includes('ROLE_ADMIN')) {
       return (
         <span className="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
-          Admin
+          {t('common.roleAdmin')}
         </span>
       );
     }
     if (user.roles.includes('ROLE_TEACHER')) {
       return (
         <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-amber-200">
-          Guru
+          {t('common.roleTeacher')}
         </span>
       );
     }
     return (
       <span className="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-teal-200">
-        Siswa
+        {t('common.roleStudent')}
       </span>
     );
   };
@@ -41,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
           <div className="flex items-center space-x-2 truncate">
             <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="truncate">
-              Mode Login As: <strong>{user.name}</strong> ({user.email})
+              {t('nav.impersonating')} <strong>{user.name}</strong> ({user.email})
             </span>
           </div>
           <button
@@ -49,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
             className="bg-white text-amber-700 hover:bg-amber-50 px-3 py-1 rounded-md text-xs font-bold transition shadow-xs flex items-center shrink-0 ml-2 cursor-pointer"
           >
             <UserCheck className="w-3.5 h-3.5 mr-1" />
-            Keluar
+            {t('nav.stopImpersonating')}
           </button>
         </div>
       )}
@@ -61,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
             type="button"
             onClick={onToggleMobileMenu}
             className="-m-2 p-2 text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg md:hidden transition"
-            aria-label="Toggle mobile menu"
+            aria-label={t('nav.toggleMenu')}
           >
             {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -71,15 +74,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
-              alt="Spring E-Learning Logo"
+              alt={t('common.logoAlt')}
               className="w-9 h-9 rounded-xl object-cover shadow-xs border border-emerald-100"
             />
             <div>
               <h1 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-none">
-                Spring E-Learning
+                {t('common.appName')}
               </h1>
               <p className="text-[11px] text-gray-500 mt-0.5 hidden sm:block">
-                Learning Management & CBT System
+                {t('common.appTagline')}
               </p>
             </div>
           </div>
@@ -87,6 +90,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
 
         {/* Right: User Profile & Actions */}
         <div className="flex items-center space-x-3 sm:space-x-4">
+          <LanguageSwitcher />
+
           <div className="flex items-center space-x-3 pr-2 sm:pr-4 border-r border-gray-200">
             <div className="text-right hidden sm:block">
               <div className="text-sm font-semibold text-gray-800 leading-tight">
@@ -100,21 +105,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, isMobileOpen
           {!user?.impersonatedBy && (
             <Link
               to="/change-password"
-              title="Ganti Password"
+              title={t('nav.changePassword')}
               className="flex items-center space-x-1.5 text-sm text-gray-600 hover:text-emerald-700 transition px-2.5 sm:px-3 py-2 rounded-lg hover:bg-emerald-50"
             >
               <KeyRound className="w-4 h-4" />
-              <span className="font-medium hidden lg:inline">Password</span>
+              <span className="font-medium hidden lg:inline">{t('nav.passwordShort')}</span>
             </Link>
           )}
 
           <button
             onClick={logout}
-            title="Keluar dari Aplikasi"
+            title={t('nav.logoutTitle')}
             className="flex items-center space-x-1.5 text-sm text-gray-600 hover:text-rose-600 transition px-2.5 sm:px-3 py-2 rounded-lg hover:bg-rose-50 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            <span className="font-medium hidden sm:inline">Keluar</span>
+            <span className="font-medium hidden sm:inline">{t('nav.logout')}</span>
           </button>
         </div>
       </div>

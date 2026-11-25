@@ -1,0 +1,38 @@
+import { defineMessages } from '../define';
+
+export const materialDetail = defineMessages({
+  id: {
+    loading: 'Memuat modul...',
+    notFound: 'Materi tidak ditemukan.',
+    backToMaterialsShort: 'Kembali ke Materi',
+    backToMaterials: 'Kembali ke materi',
+    views: '{count} dilihat',
+    teacherLabel: 'Guru Pengampu:',
+    classLabel: 'Kelas:',
+    allClasses: 'Semua Kelas',
+    publishedOn: 'Dipublikasikan: {date}',
+    attachmentTitle: 'Berkas Lampiran ({type})',
+    attachmentText: 'Unduh atau buka modul silabus pembelajaran',
+    openDocument: 'Buka Dokumen',
+    invalidLink: 'Tautan lampiran tidak valid',
+    readingActivity: 'Aktivitas Membaca Siswa ({count} Selesai)',
+    noViewers: 'Belum ada siswa yang mengakses materi ini.',
+  },
+  en: {
+    loading: 'Loading module...',
+    notFound: 'Material not found.',
+    backToMaterialsShort: 'Back to Materials',
+    backToMaterials: 'Back to materials',
+    views: '{count} views',
+    teacherLabel: 'Teacher:',
+    classLabel: 'Class:',
+    allClasses: 'All Classes',
+    publishedOn: 'Published: {date}',
+    attachmentTitle: 'Attachment ({type})',
+    attachmentText: 'Download or open the learning syllabus module',
+    openDocument: 'Open Document',
+    invalidLink: 'Invalid attachment link',
+    readingActivity: 'Student Reading Activity ({count} Completed)',
+    noViewers: 'No students have accessed this material yet.',
+  },
+});

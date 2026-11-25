@@ -14,6 +14,7 @@ import {
   FileQuestion,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n';
 
 export const ExamList: React.FC = () => {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -23,6 +24,13 @@ export const ExamList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const { user } = useAuthStore();
+  const { t, locale } = useI18n();
+  const statusLabel = (status: string) =>
+    status === 'published'
+      ? t('examList.statusPublished')
+      : status === 'archived'
+      ? t('examList.statusArchived')
+      : t('examList.statusDraft');
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
@@ -88,7 +96,7 @@ export const ExamList: React.FC = () => {
       setModalOpen(false);
       loadData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create exam');
+      alert(err.response?.data?.message || t('examList.createFailed'));
     }
   };
 
@@ -102,8 +110,8 @@ export const ExamList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Ujian CBT (Computer-Based Test)</h2>
-          <p className="text-xs text-slate-500 mt-1">Ujian online interaktif dengan proteksi anti-cheat dan telemetri langsung</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('examList.title')}</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('examList.subtitle')}</p>
         </div>
 
         {(isAdmin || isTeacher) && (
@@ -112,18 +120,18 @@ export const ExamList: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Buat Ujian Baru</span>
+            <span>{t('examList.createButton')}</span>
           </button>
         )}
       </div>
 
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading examinations...</div>
+        <div className="p-8 text-center text-slate-500">{t('examList.loading')}</div>
       ) : exams.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 shadow-xs">
           <FileCheck2 className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-base font-medium">No examinations scheduled</p>
-          <p className="text-xs mt-1 text-slate-400">Scheduled tests will appear here.</p>
+          <p className="text-base font-medium">{t('examList.emptyTitle')}</p>
+          <p className="text-xs mt-1 text-slate-400">{t('examList.emptyText')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -140,14 +148,14 @@ export const ExamList: React.FC = () => {
                   {(isAdmin || isTeacher) ? (
                     <button
                       onClick={() => handleToggleStatus(exam.id, exam.status)}
-                      title="Click to toggle status"
+                      title={t('examList.toggleStatusTitle')}
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase cursor-pointer transition ${
                         exam.status === 'published'
                           ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                           : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                       }`}
                     >
-                      {exam.status}
+                      {statusLabel(exam.status)}
                     </button>
                   ) : (
                     <span
@@ -157,31 +165,31 @@ export const ExamList: React.FC = () => {
                           : 'bg-amber-100 text-amber-700'
                       }`}
                     >
-                      {exam.status}
+                      {statusLabel(exam.status)}
                     </span>
                   )}
                 </div>
 
                 <h3 className="text-base font-bold text-slate-900 line-clamp-1">{exam.title}</h3>
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                  Class: <strong>{exam.classroomName}</strong> | Passing: <strong>{exam.passingScore}%</strong>
+                  {t('examList.classLabel')} <strong>{exam.classroomName}</strong> | {t('examList.passingLabel')} <strong>{exam.passingScore}%</strong>
                 </p>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs text-slate-600">
                   <div className="flex items-center space-x-1.5">
                     <Clock className="w-4 h-4 text-slate-400" />
-                    <span>{exam.durationMinutes} Minutes</span>
+                    <span>{t('examList.durationMinutes', { count: exam.durationMinutes })}</span>
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <FileQuestion className="w-4 h-4 text-slate-400" />
-                    <span>{exam.totalQuestions} Questions</span>
+                    <span>{exam.totalQuestions === 1 ? t('examList.questionOne') : t('examList.questionCount', { count: exam.totalQuestions })}</span>
                   </div>
                   <div className="col-span-2 flex items-center space-x-1.5 text-[11px] text-slate-400">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>
-                      {new Date(exam.startAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(exam.startAt).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' })}
                       {' - '}
-                      {new Date(exam.endAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(exam.endAt).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' })}
                     </span>
                   </div>
                 </div>
@@ -195,14 +203,14 @@ export const ExamList: React.FC = () => {
                       to={`/exams/${exam.id}/questions`}
                       className="flex-1 text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs transition"
                     >
-                      Soal ({exam.totalQuestions})
+                      {t('examList.questionsButton', { count: exam.totalQuestions })}
                     </Link>
                     <Link
                       to={`/exams/${exam.id}/monitor`}
                       className="flex-1 text-center bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center space-x-1"
                     >
                       <MonitorPlay className="w-3.5 h-3.5 mr-1" />
-                      <span>Live Monitor</span>
+                      <span>{t('examList.liveMonitor')}</span>
                     </Link>
                   </>
                 ) : (
@@ -211,14 +219,14 @@ export const ExamList: React.FC = () => {
                       <div className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
                         <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-700">
                           <CheckCircle className="w-4 h-4 text-emerald-600" />
-                          <span>Nilai: {exam.studentScore ?? 0}/100</span>
+                          <span>{t('examList.score', { score: exam.studentScore ?? 0 })}</span>
                         </div>
                         <span
                           className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                             exam.studentPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                           }`}
                         >
-                          {exam.studentPassed ? 'LULUS' : 'REMIDI'}
+                          {exam.studentPassed ? t('examList.passed') : t('examList.remedial')}
                         </span>
                       </div>
                     ) : (
@@ -227,7 +235,7 @@ export const ExamList: React.FC = () => {
                         className="w-full text-center bg-gradient-to-r from-[#059669] to-[#065f46] hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md shadow-emerald-700/20 transition flex items-center justify-center space-x-2"
                       >
                         <Play className="w-4 h-4 fill-white" />
-                        <span>{exam.studentAttemptStatus === 'in_progress' ? 'Lanjutkan Ujian' : 'Mulai Ujian CBT'}</span>
+                        <span>{exam.studentAttemptStatus === 'in_progress' ? t('examList.continueExam') : t('examList.startExam')}</span>
                       </Link>
                     )}
                   </>
@@ -245,18 +253,19 @@ export const ExamList: React.FC = () => {
             <button
               onClick={() => setModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Create CBT Examination</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('examList.modalTitle')}</h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Exam Title</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('examList.examTitle')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Penilaian Akhir Semester Ganjil 2026"
+                  placeholder={t('examList.examTitlePlaceholder')}
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -265,14 +274,14 @@ export const ExamList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Subject</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examList.subject')}</label>
                   <select
                     required
                     value={form.subjectId}
                     onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">-- Choose Subject --</option>
+                    <option value="">{t('examList.chooseSubject')}</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} ({s.code})
@@ -281,14 +290,14 @@ export const ExamList: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Target Class</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examList.targetClass')}</label>
                   <select
                     required
                     value={form.classroomId}
                     onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="">-- Choose Classroom --</option>
+                    <option value="">{t('examList.chooseClass')}</option>
                     {classrooms.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -300,7 +309,7 @@ export const ExamList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Duration (Minutes)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examList.duration')}</label>
                   <input
                     type="number"
                     required
@@ -312,7 +321,7 @@ export const ExamList: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Passing Score (%)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examList.passingScore')}</label>
                   <input
                     type="number"
                     required
@@ -327,7 +336,7 @@ export const ExamList: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Start Time</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examList.startTime')}</label>
                   <input
                     type="datetime-local"
                     required
@@ -337,7 +346,7 @@ export const ExamList: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">End Time</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('examList.endTime')}</label>
                   <input
                     type="datetime-local"
                     required
@@ -356,7 +365,7 @@ export const ExamList: React.FC = () => {
                     onChange={(e) => setForm({ ...form, shuffleQuestions: e.target.checked })}
                     className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
-                  <span>Randomize Questions</span>
+                  <span>{t('examList.shuffleQuestions')}</span>
                 </label>
                 <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
                   <input
@@ -365,7 +374,7 @@ export const ExamList: React.FC = () => {
                     onChange={(e) => setForm({ ...form, shuffleOptions: e.target.checked })}
                     className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
-                  <span>Randomize Options</span>
+                  <span>{t('examList.shuffleOptions')}</span>
                 </label>
               </div>
 
@@ -375,13 +384,13 @@ export const ExamList: React.FC = () => {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  Buat & Publikasikan Ujian
+                  {t('examList.createAndPublish')}
                 </button>
               </div>
             </form>

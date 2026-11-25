@@ -7,10 +7,12 @@ import {
   CheckCircle2,
   FileCheck2,
 } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 export const Grades: React.FC = () => {
   const [report, setReport] = useState<GradeReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     const fetchGrades = async () => {
@@ -29,19 +31,19 @@ export const Grades: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Loading academic report card...</div>;
+    return <div className="p-8 text-center text-slate-500">{t('grades.loading')}</div>;
   }
 
   if (!report) {
-    return <div className="p-12 text-center text-slate-500">No grades data available.</div>;
+    return <div className="p-12 text-center text-slate-500">{t('grades.noData')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Academic Grades & Progress</h2>
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{t('grades.title')}</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Detailed performance breakdown across CBT examinations and course assignments
+          {t('grades.subtitle')}
         </p>
       </div>
 
@@ -49,7 +51,7 @@ export const Grades: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-[#059669] to-[#064e3b] rounded-3xl p-6 text-white shadow-xl shadow-emerald-700/20 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider">Rata-Rata Nilai (GPA)</p>
+            <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider">{t('grades.gpa')}</p>
             <h3 className="text-4xl font-extrabold mt-1">{report.overallGpa} / 100</h3>
             <p className="text-xs text-emerald-200 mt-1">{report.studentName} • {report.classroomName}</p>
           </div>
@@ -60,9 +62,9 @@ export const Grades: React.FC = () => {
 
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ujian Selesai</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('grades.completedExams')}</p>
             <h3 className="text-3xl font-extrabold text-slate-800 mt-1">{report.totalCompletedExams}</h3>
-            <p className="text-xs text-slate-400 mt-1">Sesi ujian diselesaikan</p>
+            <p className="text-xs text-slate-400 mt-1">{t('grades.completedExamsHint')}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <FileCheck2 className="w-6 h-6" />
@@ -71,9 +73,9 @@ export const Grades: React.FC = () => {
 
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ujian Lulus</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('grades.passedExams')}</p>
             <h3 className="text-3xl font-extrabold text-emerald-600 mt-1">{report.totalPassedExams}</h3>
-            <p className="text-xs text-slate-400 mt-1">Di atas batas KKM</p>
+            <p className="text-xs text-slate-400 mt-1">{t('grades.passedExamsHint')}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />
@@ -86,23 +88,23 @@ export const Grades: React.FC = () => {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
             <BookMarked className="w-5 h-5 text-emerald-600" />
-            <span>Rincian Nilai per Mata Pelajaran</span>
+            <span>{t('grades.subjectBreakdown')}</span>
           </h3>
         </div>
 
         {report.subjects.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-sm">Belum ada mata pelajaran terdaftar.</div>
+          <div className="p-8 text-center text-slate-400 text-sm">{t('grades.noSubjects')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm min-w-[650px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Mata Pelajaran</th>
-                  <th className="px-6 py-4">SKS</th>
-                  <th className="px-6 py-4">Rata Ujian CBT</th>
-                  <th className="px-6 py-4">Rata Tugas</th>
-                  <th className="px-6 py-4">Nilai Akhir</th>
-                  <th className="px-6 py-4 text-right">Status</th>
+                  <th className="px-6 py-4">{t('grades.colSubject')}</th>
+                  <th className="px-6 py-4">{t('grades.colCredits')}</th>
+                  <th className="px-6 py-4">{t('grades.colExamAvg')}</th>
+                  <th className="px-6 py-4">{t('grades.colAssignmentAvg')}</th>
+                  <th className="px-6 py-4">{t('grades.colFinal')}</th>
+                  <th className="px-6 py-4 text-right">{t('common.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -112,14 +114,14 @@ export const Grades: React.FC = () => {
                       <div className="font-semibold text-slate-900">{sub.subjectName}</div>
                       <div className="text-xs font-mono text-slate-400">{sub.subjectCode}</div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 text-xs">{sub.credits} SKS</td>
+                    <td className="px-6 py-4 text-slate-600 text-xs">{t('grades.credits', { count: sub.credits })}</td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-800">{sub.avgExamScore} / 100</div>
-                      <div className="text-[11px] text-slate-400">{sub.totalExams} ujian diikuti</div>
+                      <div className="text-[11px] text-slate-400">{t('grades.examsTaken', { count: sub.totalExams })}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-800">{sub.avgAssignmentScore} / 100</div>
-                      <div className="text-[11px] text-slate-400">{sub.totalAssignments} tugas diserahkan</div>
+                      <div className="text-[11px] text-slate-400">{t('grades.assignmentsSubmitted', { count: sub.totalAssignments })}</div>
                     </td>
                     <td className="px-6 py-4 font-bold text-base text-emerald-600">
                       {sub.overallScore > 0 ? `${sub.overallScore}` : '-'}
@@ -127,14 +129,14 @@ export const Grades: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       {sub.overallScore >= 75 ? (
                         <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase border border-emerald-200">
-                          Lulus
+                          {t('grades.passed')}
                         </span>
                       ) : sub.overallScore > 0 ? (
                         <span className="bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-full uppercase border border-rose-200">
-                          Remedial
+                          {t('grades.remedial')}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400 italic">Belum ada nilai</span>
+                        <span className="text-xs text-slate-400 italic">{t('grades.noScore')}</span>
                       )}
                     </td>
                   </tr>
