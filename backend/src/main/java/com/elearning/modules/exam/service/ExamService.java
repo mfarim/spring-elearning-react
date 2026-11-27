@@ -105,8 +105,7 @@ public class ExamService {
 
     @Transactional
     public ExamResponse createExam(ExamDto dto, UserPrincipal principal) {
-        Teacher teacher = teacherRepository.findByUserId(principal.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Teacher profile not found"));
+        Teacher teacher = resolveOwnerTeacher(dto.getTeacherId(), principal);
 
         Subject subject = subjectRepository.findById(dto.getSubjectId())
                 .orElseThrow(() -> new IllegalArgumentException("Subject not found: " + dto.getSubjectId()));
@@ -394,6 +393,22 @@ public class ExamService {
         Map<String, Object> result = new HashMap<>();
         result.put("importedCount", questionsToSave.size());
         return result;
+    }
+
+    /**
+     * A teacher owns the exams they create. An admin has no teacher profile, so an admin names the
+     * owning teacher with {@code teacherId}; a teacher cannot create exams on behalf of someone else.
+     */
+    private Teacher resolveOwnerTeacher(Long teacherId, UserPrincipal principal) {
+        boolean isAdmin = principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin && teacherId != null) {
+            return teacherRepository.findById(teacherId)
+                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found: " + teacherId));
+        }
+        return teacherRepository.findByUserId(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException(isAdmin
+                        ? "Choose the teacher who owns this exam"
+                        : "Teacher profile not found"));
     }
 
     private void validateTeacherOwnership(Examination exam, UserPrincipal principal) {

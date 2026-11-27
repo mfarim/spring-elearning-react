@@ -158,7 +158,7 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     B->>API: POST /api/v1/auth/login (email, password)
-    API->>API: Rate limit per IP and per email (5/min)
+    API->>API: Rate limit per email (5/min) and per IP (100/min)
     API->>DB: Load user, verify BCrypt hash
     API->>R: SET auth:refresh:{jti} = userId (TTL 7d)
     API-->>B: accessToken in body + Set-Cookie refresh_token (httpOnly, Secure, SameSite=Strict, Path=/api/v1/auth)

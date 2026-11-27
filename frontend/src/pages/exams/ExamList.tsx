@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
-import type { Exam, Subject, Classroom, ApiResponse } from '../../types';
+import type { Exam, Subject, Classroom, Teacher, ApiResponse } from '../../types';
+import { apiErrorMessage } from '../../utils/errors';
 import {
   FileCheck2,
   Plus,
@@ -12,6 +13,7 @@ import {
   CheckCircle,
   X,
   FileQuestion,
+  Hourglass,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n';
@@ -20,8 +22,11 @@ export const ExamList: React.FC = () => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  // Only an admin picks the owning teacher; a teacher always owns the exams they create.
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { user } = useAuthStore();
   const { t, locale } = useI18n();
@@ -38,6 +43,7 @@ export const ExamList: React.FC = () => {
     title: '',
     subjectId: '',
     classroomId: '',
+    teacherId: '',
     type: 'quiz',
     durationMinutes: 60,
     passingScore: 75,
@@ -61,6 +67,10 @@ export const ExamList: React.FC = () => {
       setExams(eRes.data.data);
       setSubjects(sRes.data.data);
       setClassrooms(cRes.data.data);
+      if (isAdmin) {
+        const tRes = await api.get<ApiResponse<Teacher[]>>('/teachers');
+        setTeachers(tRes.data.data);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -72,13 +82,38 @@ export const ExamList: React.FC = () => {
     loadData();
   }, []);
 
+  /** The same schedule rules the server enforces, checked first so the form can say what to fix. */
+  const scheduleError = (): string | null => {
+    const start = new Date(form.startAt).getTime();
+    const end = new Date(form.endAt).getTime();
+    if (Number.isNaN(start) || Number.isNaN(end)) return null; // left to the required fields
+    if (end <= start) return t('examList.endBeforeStart');
+    const windowMinutes = Math.floor((end - start) / 60000);
+    if (Number(form.durationMinutes) > windowMinutes) {
+      return t('examList.durationTooLong', { duration: Number(form.durationMinutes), window: windowMinutes });
+    }
+    return null;
+  };
+
+  const openCreateModal = () => {
+    setFormError(null);
+    setModalOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const invalidSchedule = scheduleError();
+    if (invalidSchedule) {
+      setFormError(invalidSchedule);
+      return;
+    }
+    setFormError(null);
     try {
       const payload = {
         title: form.title,
         subjectId: Number(form.subjectId),
         classroomId: Number(form.classroomId),
+        teacherId: isAdmin && form.teacherId ? Number(form.teacherId) : undefined,
         type: form.type,
         durationMinutes: Number(form.durationMinutes),
         passingScore: Number(form.passingScore),
@@ -95,8 +130,8 @@ export const ExamList: React.FC = () => {
       await api.post('/exams', payload);
       setModalOpen(false);
       loadData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || t('examList.createFailed'));
+    } catch (err) {
+      setFormError(apiErrorMessage(err, t('examList.createFailed')));
     }
   };
 
@@ -116,7 +151,7 @@ export const ExamList: React.FC = () => {
 
         {(isAdmin || isTeacher) && (
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openCreateModal}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-2 text-sm cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
@@ -215,7 +250,17 @@ export const ExamList: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    {exam.studentAttemptStatus === 'completed' ? (
+                    {exam.studentAttemptStatus === 'needs_grading' ? (
+                      <div className="w-full flex items-center space-x-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-sm font-semibold text-amber-800">
+                        <Hourglass className="w-4 h-4 shrink-0" />
+                        <span>{t('examList.awaitingGrading')}</span>
+                      </div>
+                    ) : exam.studentAttemptStatus === 'submitted' || exam.studentAttemptStatus === 'force_finished' ? (
+                      <div className="w-full flex items-center space-x-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700">
+                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+                        <span>{t('examList.alreadySubmitted')}</span>
+                      </div>
+                    ) : exam.studentAttemptStatus === 'completed' ? (
                       <div className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
                         <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-700">
                           <CheckCircle className="w-4 h-4 text-emerald-600" />
@@ -307,6 +352,28 @@ export const ExamList: React.FC = () => {
                 </div>
               </div>
 
+              {isAdmin && (
+                <div>
+                  <label htmlFor="exam-owner-teacher" className="block font-semibold text-slate-700 mb-1">
+                    {t('examList.ownerTeacher')}
+                  </label>
+                  <select
+                    id="exam-owner-teacher"
+                    required
+                    value={form.teacherId}
+                    onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  >
+                    <option value="">{t('examList.chooseTeacher')}</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">{t('examList.duration')}</label>
@@ -350,6 +417,7 @@ export const ExamList: React.FC = () => {
                   <input
                     type="datetime-local"
                     required
+                    min={form.startAt || undefined}
                     value={form.endAt}
                     onChange={(e) => setForm({ ...form, endAt: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -377,6 +445,12 @@ export const ExamList: React.FC = () => {
                   <span>{t('examList.shuffleOptions')}</span>
                 </label>
               </div>
+
+              {formError && (
+                <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+                  {formError}
+                </p>
+              )}
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
                 <button

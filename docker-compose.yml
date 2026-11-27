@@ -58,6 +58,8 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required - create .env with output of openssl rand -base64 32}
+      # School time zone: exam schedules and deadlines are compared against this clock (WIB by default).
+      TZ: ${APP_TIMEZONE:-Asia/Jakarta}
       STORAGE_UPLOAD_DIR: /app/storage/uploads
       APP_DEMO_MODE: ${APP_DEMO_MODE:-false}
       # Local stack is served over plain HTTP, so the refresh-token cookie cannot be Secure here.

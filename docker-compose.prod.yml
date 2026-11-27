@@ -44,6 +44,11 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (openssl rand -base64 32)}
+      # School time zone: exam schedules and deadlines are compared against this clock (WIB by default).
+      TZ: ${APP_TIMEZONE:-Asia/Jakarta}
+      # Logins per minute from one IP address: must fit a computer lab behind one public IP.
+      APP_RATE_LIMIT_LOGIN_PER_IP: ${APP_RATE_LIMIT_LOGIN_PER_IP:-100}
+      APP_RATE_LIMIT_AUTH_PER_IP: ${APP_RATE_LIMIT_AUTH_PER_IP:-200}
       STORAGE_UPLOAD_DIR: /app/storage/uploads
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
       APP_DEMO_MODE: ${APP_DEMO_MODE:-false}

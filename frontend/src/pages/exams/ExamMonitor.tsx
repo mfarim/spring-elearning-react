@@ -25,6 +25,7 @@ const ATTEMPT_STATUS_LABELS: Record<AttemptStatus, MessageKey> = {
   submitted: 'examMonitor.statusSubmitted',
   needs_grading: 'examMonitor.statusNeedsGrading',
   completed: 'examMonitor.statusCompleted',
+  force_finished: 'examMonitor.statusForceFinished',
 };
 
 export const ExamMonitor: React.FC = () => {

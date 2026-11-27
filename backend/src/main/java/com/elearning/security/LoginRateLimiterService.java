@@ -4,6 +4,7 @@ import com.elearning.common.exception.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
@@ -18,14 +19,21 @@ public class LoginRateLimiterService {
     private final RateLimiter rateLimiter;
     private static final Duration WINDOW = Duration.ofMinutes(1);
 
-    // 5 login attempts per minute per IP address
-    private static final int MAX_ATTEMPTS_PER_IP = 5;
-    // 5 login attempts per minute per account email
-    private static final int MAX_ATTEMPTS_PER_EMAIL = 5;
+    /**
+     * Login attempts per minute from one IP address, successful ones included. A school computer lab shares
+     * one public IP, so this must fit a whole class signing in at the start of an exam. Guessing the password
+     * of a single account is stopped by the much lower per-e-mail limit below.
+     */
+    @Value("${app.rate-limit.login-per-ip:100}")
+    private int maxAttemptsPerIp = 100;
+
+    /** Login attempts per minute for one account e-mail (reset after a successful login). */
+    @Value("${app.rate-limit.login-per-email:5}")
+    private int maxAttemptsPerEmail = 5;
 
     public void checkLoginAllowed(String clientIp, String email) {
         if (clientIp != null && !clientIp.isBlank()) {
-            if (!rateLimiter.tryAcquire("login:ip:" + clientIp, MAX_ATTEMPTS_PER_IP, WINDOW)) {
+            if (!rateLimiter.tryAcquire("login:ip:" + clientIp, maxAttemptsPerIp, WINDOW)) {
                 log.warn("Login rate limit exceeded for IP: {}", clientIp);
                 throw new RateLimitExceededException("Terlalu banyak percobaan login dari alamat IP ini. Silakan tunggu 1 menit sebelum mencoba lagi.");
             }
@@ -33,7 +41,7 @@ public class LoginRateLimiterService {
 
         if (email != null && !email.isBlank()) {
             String normalizedEmail = email.trim().toLowerCase();
-            if (!rateLimiter.tryAcquire("login:email:" + normalizedEmail, MAX_ATTEMPTS_PER_EMAIL, WINDOW)) {
+            if (!rateLimiter.tryAcquire("login:email:" + normalizedEmail, maxAttemptsPerEmail, WINDOW)) {
                 log.warn("Login rate limit exceeded for email: {}", email);
                 throw new RateLimitExceededException("Terlalu banyak percobaan login gagal untuk akun ini. Silakan tunggu 1 menit sebelum mencoba lagi.");
             }

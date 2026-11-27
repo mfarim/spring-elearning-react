@@ -110,7 +110,7 @@ export interface LearningMaterial {
 
 export type ExamType = 'quiz' | 'midterm' | 'final' | 'tryout';
 export type ExamStatus = 'draft' | 'published' | 'archived';
-export type AttemptStatus = 'in_progress' | 'submitted' | 'needs_grading' | 'completed';
+export type AttemptStatus = 'in_progress' | 'submitted' | 'needs_grading' | 'completed' | 'force_finished';
 
 export interface Exam {
   id: number;
