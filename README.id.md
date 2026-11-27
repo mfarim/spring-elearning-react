@@ -37,7 +37,7 @@ Platform web **E-Learning** dan **Computer Based Test (CBT)** berfitur lengkap u
 | **Dashboard** | Statistik mengajar, jadwal ujian CBT mendatang, tugas aktif, dan aktivitas terkini |
 | **Materi Belajar** | CRUD + 5 tipe konten (Dokumen, Video, Teks, Link, Audio) + pelacakan pembaca siswa |
 | **Tugas Siswa** | CRUD + tenggat waktu + petunjuk pengerjaan + penilaian submission & umpan balik |
-| **Ujian CBT** | CRUD + durasi timer + KKM (passing grade) + acak soal/opsi + izin remidi (retry) |
+| **Ujian CBT** | CRUD + durasi timer + KKM (passing grade) + acak soal/opsi + izin remidi (retry) + tampilkan atau sembunyikan nilai dari siswa |
 | **Bank & Editor Soal** | Pilihan Ganda (A-E), Benar/Salah, Esai + bobot poin + **📥 Import Soal Excel** |
 | **Monitor Telemetri** | Pemantauan progres pengerjaan kandidat, indikator soal terjawab, dan deteksi pelanggaran anti-cheat real-time |
 | **Cetak Kartu Ujian** | Cetak kartu resmi peserta ujian CBT yang siap digunakan lengkap dengan barcode NIS |

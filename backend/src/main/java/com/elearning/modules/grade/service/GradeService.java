@@ -36,7 +36,8 @@ public class GradeService {
 
         List<Subject> subjects = subjectRepository.findAll();
         List<ExamAttempt> attempts = attemptRepository.findByStudentId(student.getId()).stream()
-                .filter(a -> a.getStatus() == AttemptStatus.completed)
+                // Exams that do not show results are left out, or their scores would leak through the averages.
+                .filter(a -> a.getStatus() == AttemptStatus.completed && a.getExamination().isShowResult())
                 .collect(Collectors.toList());
 
         List<AssignmentSubmission> submissions = submissionRepository.findAll().stream()

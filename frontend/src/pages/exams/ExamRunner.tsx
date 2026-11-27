@@ -35,8 +35,10 @@ const FINAL_FLUSH_WAIT_MS = 5000;
 interface SubmitResult {
   attemptId: number;
   status: AttemptStatus;
-  score: number;
-  passed: boolean;
+  /** Left out when the exam does not show results to students. */
+  score?: number;
+  passed?: boolean;
+  resultHidden?: boolean;
 }
 
 /** Why the attempt ended: the student submitted, time ran out, too many violations, or the server closed it. */
@@ -352,6 +354,8 @@ export const ExamRunner: React.FC = () => {
 
   if (submittedResult) {
     const awaitingGrading = submittedResult.status === 'needs_grading';
+    // The teacher has not released the scores of this exam (its "show result" setting is off).
+    const resultHidden = submittedResult.resultHidden === true;
     const resultTitle =
       finishReason === 'timeout'
         ? t('examRunner.timeUpTitle')
@@ -394,15 +398,24 @@ export const ExamRunner: React.FC = () => {
           {awaitingGrading ? (
             <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/60 space-y-3">
               <div className="text-base font-bold text-amber-300">{t('examRunner.pendingGradingTitle')}</div>
-              <p className="text-sm text-slate-300">{t('examRunner.pendingGradingText')}</p>
-              <div className="text-sm text-slate-400">
-                {t('examRunner.provisionalScore')}: <strong className="text-slate-200">{submittedResult.score} / 100</strong>
-              </div>
+              <p className="text-sm text-slate-300">
+                {resultHidden ? t('examRunner.pendingGradingHiddenText') : t('examRunner.pendingGradingText')}
+              </p>
+              {!resultHidden && (
+                <div className="text-sm text-slate-400">
+                  {t('examRunner.provisionalScore')}: <strong className="text-slate-200">{submittedResult.score ?? 0} / 100</strong>
+                </div>
+              )}
+            </div>
+          ) : resultHidden ? (
+            <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/60 space-y-3">
+              <div className="text-base font-bold text-slate-100">{t('examRunner.resultHiddenTitle')}</div>
+              <p className="text-sm text-slate-300">{t('examRunner.resultHiddenText')}</p>
             </div>
           ) : (
             <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/60 space-y-3">
               <div className="text-xs text-slate-400">{t('examRunner.finalScore')}</div>
-              <div className="text-4xl font-extrabold text-emerald-400">{submittedResult.score} / 100</div>
+              <div className="text-4xl font-extrabold text-emerald-400">{submittedResult.score ?? 0} / 100</div>
               <div className="text-xs font-semibold">
                 {t('examRunner.statusLabel')}{' '}
                 <span className={submittedResult.passed ? 'text-emerald-400' : 'text-rose-400'}>

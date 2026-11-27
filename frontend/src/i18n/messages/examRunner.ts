@@ -33,6 +33,9 @@ export const examRunner = defineMessages({
     pendingGradingTitle: 'Menunggu Penilaian Guru',
     pendingGradingText: 'Jawaban esai Anda akan dinilai oleh guru. Nilai akhir tampil setelah penilaian selesai.',
     provisionalScore: 'Nilai sementara dari soal yang dinilai otomatis',
+    pendingGradingHiddenText: 'Jawaban esai Anda akan dinilai oleh guru. Nilai ujian ini dibagikan oleh guru.',
+    resultHiddenTitle: 'Nilai Belum Dibagikan',
+    resultHiddenText: 'Jawaban Anda sudah diterima. Nilai ujian ini akan dibagikan oleh guru.',
     toggleFullscreen: 'Aktifkan/nonaktifkan layar penuh',
     securityAlert:
       'Peringatan Keamanan: {count}/5 pelanggaran tercatat. Meninggalkan tab ujian akan mengumpulkan ujian Anda secara otomatis!',
@@ -89,6 +92,9 @@ export const examRunner = defineMessages({
     pendingGradingTitle: 'Waiting for Teacher Grading',
     pendingGradingText: 'Your essay answers will be graded by the teacher. The final score appears once grading is done.',
     provisionalScore: 'Provisional score from automatically graded questions',
+    pendingGradingHiddenText: 'Your essay answers will be graded by the teacher. The teacher shares the score of this exam.',
+    resultHiddenTitle: 'Score Not Shared Yet',
+    resultHiddenText: 'Your answers have been received. The teacher will share the score of this exam.',
     toggleFullscreen: 'Toggle fullscreen',
     securityAlert:
       'Security Alert: {count}/5 violations recorded. Leaving the exam tab will submit your exam automatically!',

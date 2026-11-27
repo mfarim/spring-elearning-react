@@ -317,6 +317,27 @@ class ExamRunnerServiceTest {
         assertEquals(AttemptStatus.in_progress, created.getValue().getStatus());
     }
 
+    // --- result visibility ------------------------------------------------------------------------
+
+    @Test
+    void resultIsVisibleToTheStudentOnlyWhenTheExamShowsResults() {
+        ExamAttempt attempt = attempt(AttemptStatus.completed, LocalDateTime.now().minusMinutes(30));
+        when(attemptRepository.findById(ATTEMPT_ID)).thenReturn(Optional.of(attempt));
+
+        exam.setShowResult(false);
+        assertFalse(service.isResultVisibleToStudent(ATTEMPT_ID));
+
+        exam.setShowResult(true);
+        assertTrue(service.isResultVisibleToStudent(ATTEMPT_ID));
+    }
+
+    @Test
+    void resultOfAnUnknownAttemptIsNotVisible() {
+        when(attemptRepository.findById(ATTEMPT_ID)).thenReturn(Optional.empty());
+
+        assertFalse(service.isResultVisibleToStudent(ATTEMPT_ID));
+    }
+
     // --- helpers ---------------------------------------------------------------------------------
 
     private Question question(long id, QuestionType type, String correctAnswer, int points) {

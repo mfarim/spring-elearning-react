@@ -37,7 +37,7 @@ A full-featured web-based **E-Learning** and **Computer Based Test (CBT)** platf
 | **Dashboard** | Teaching metrics, scheduled examinations, active assignments, and recent activity |
 | **Learning Materials** | CRUD + multi-type content (Document, Video, Text, Link, Audio) + student view tracking |
 | **Assignments** | CRUD + deadline dates + instructions + submission grading with feedback |
-| **CBT Examinations** | CRUD + duration timer + passing grade (KKM) + randomize questions/options + retry toggles |
+| **CBT Examinations** | CRUD + duration timer + passing grade (KKM) + randomize questions/options + retry toggles + show or hide the score from students |
 | **Question Builder** | Multiple Choice (A-E), True/False, Essay + points allocation + **📥 Excel Import** |
 | **Live Telemetry Monitor** | Real-time WebSocket candidate status, question progress bar, and anti-cheat flag alerts |
 | **Exam Hall Tickets** | Print ready-to-use official CBT student candidate cards with NIS barcodes |

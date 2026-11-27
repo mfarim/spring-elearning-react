@@ -429,8 +429,11 @@ public class ExamService {
             if (attempt.isPresent()) {
                 ExamAttempt att = attempt.get();
                 attemptStatus = att.getStatus().name();
-                studentScore = att.getScore();
-                studentPassed = att.getPassed();
+                // The score stays hidden from the student until the exam shows results.
+                if (e.isShowResult()) {
+                    studentScore = att.getScore();
+                    studentPassed = att.getPassed();
+                }
                 currentAttemptId = att.getId();
             }
         }

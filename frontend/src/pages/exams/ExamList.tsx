@@ -16,6 +16,7 @@ import {
   Hourglass,
   Edit2,
   RotateCcw,
+  EyeOff,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useI18n, type MessageKey } from '../../i18n';
@@ -281,6 +282,12 @@ export const ExamList: React.FC = () => {
                       {new Date(exam.endAt).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' })}
                     </span>
                   </div>
+                  {(isAdmin || isTeacher) && !exam.showResult && (
+                    <div className="col-span-2 flex items-center space-x-1.5 text-[11px] font-medium text-amber-700">
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>{t('examList.resultHiddenBadge')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -322,6 +329,11 @@ export const ExamList: React.FC = () => {
                       <div className="w-full flex items-center space-x-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700">
                         <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
                         <span>{t('examList.alreadySubmitted')}</span>
+                      </div>
+                    ) : exam.studentAttemptStatus === 'completed' && !exam.showResult ? (
+                      <div className="w-full flex items-center space-x-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700">
+                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+                        <span>{t('examList.resultNotShared')}</span>
                       </div>
                     ) : exam.studentAttemptStatus === 'completed' ? (
                       <div className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
@@ -545,6 +557,18 @@ export const ExamList: React.FC = () => {
                     className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>{t('examList.allowRetry')}</span>
+                </label>
+                <label className="col-span-2 flex items-start space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.showResult}
+                    onChange={(e) => updateForm({ showResult: e.target.checked })}
+                    className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>
+                    {t('examList.showResult')}
+                    <span className="block font-normal text-slate-500">{t('examList.showResultHint')}</span>
+                  </span>
                 </label>
               </div>
 

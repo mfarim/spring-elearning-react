@@ -57,6 +57,10 @@ export const examList = defineMessages({
     typeTryout: 'Tryout',
     allowRetry: 'Izinkan remidi (siswa boleh mengulang ujian ini)',
     retryExam: 'Ulangi Ujian',
+    showResult: 'Tampilkan nilai ke siswa',
+    showResultHint: 'Jika tidak dicentang, siswa hanya melihat bahwa ujiannya selesai. Centang nanti untuk membagikan nilai.',
+    resultNotShared: 'Selesai. Nilai belum dibagikan guru.',
+    resultHiddenBadge: 'Nilai disembunyikan dari siswa',
   },
   en: {
     title: 'CBT Exams (Computer-Based Test)',
@@ -114,5 +118,9 @@ export const examList = defineMessages({
     typeTryout: 'Tryout',
     allowRetry: 'Allow retakes (students may take this exam again)',
     retryExam: 'Retake Exam',
+    showResult: 'Show the score to students',
+    showResultHint: 'When unchecked, students only see that their exam is finished. Check it later to share the scores.',
+    resultNotShared: 'Finished. The teacher has not shared the score yet.',
+    resultHiddenBadge: 'Score hidden from students',
   },
 });
