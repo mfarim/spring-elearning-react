@@ -63,6 +63,7 @@ class ExamRunnerServiceTest {
     @Mock private ExamAnswerRepository answerRepository;
     @Mock private StudentRepository studentRepository;
     @Mock private ExamRealtimeService realtimeService;
+    @Mock private ExamResultEvents resultEvents;
 
     @InjectMocks
     private ExamRunnerService service;
@@ -151,6 +152,8 @@ class ExamRunnerServiceTest {
         assertFalse(placeholder.getCorrect());
         assertEquals(0, placeholder.getPointsEarned());
         verify(realtimeService).broadcastExamEvent(any(), any(), any());
+        // Fully auto-graded: the result is final, so the e-mail event is recorded now.
+        verify(resultEvents).resultReady(result);
     }
 
     @Test
@@ -168,6 +171,8 @@ class ExamRunnerServiceTest {
         assertNull(essayAnswer.getCorrect());
         assertNull(keylessAnswer.getCorrect());
         assertEquals(0, result.getScore());
+        // The score is provisional until the teacher grades the essays: no e-mail yet.
+        verify(resultEvents, never()).resultReady(any());
     }
 
     @Test
@@ -177,7 +182,7 @@ class ExamRunnerServiceTest {
         ExamAttempt result = service.autoFinalizeAttempt(attempt, exam);
 
         assertSame(attempt, result);
-        verifyNoInteractions(questionRepository, realtimeService);
+        verifyNoInteractions(questionRepository, realtimeService, resultEvents);
         verify(attemptRepository, never()).save(any());
     }
 
@@ -199,12 +204,32 @@ class ExamRunnerServiceTest {
 
         service.gradeEssay(ATTEMPT_ID, 11L, EssayGradingDto.builder().pointsEarned(4).build(), teacherPrincipal);
         assertEquals(AttemptStatus.needs_grading, attempt.getStatus());
+        verify(resultEvents, never()).resultReady(any());
 
         service.gradeEssay(ATTEMPT_ID, 12L, EssayGradingDto.builder().pointsEarned(3).feedback("Add an example").build(), teacherPrincipal);
         assertEquals(AttemptStatus.completed, attempt.getStatus());
         assertEquals(70, attempt.getScore()); // 7 of 10 points
         assertTrue(attempt.getPassed());
         assertEquals("Add an example", answer2.getFeedback());
+        verify(resultEvents).resultReady(attempt);
+    }
+
+    @Test
+    void regradingACompletedAttemptDoesNotAnnounceTheResultAgain() {
+        Question essay = question(1L, QuestionType.essay, null, 10);
+        ExamAttempt attempt = attempt(AttemptStatus.completed, LocalDateTime.now().minusMinutes(30));
+        ExamAnswer essayAnswer = answer(attempt, essay, "text");
+        essayAnswer.setId(11L);
+        essayAnswer.setCorrect(true);
+        essayAnswer.setPointsEarned(6);
+        stubQuestionsAndAnswers(List.of(essay), List.of(essayAnswer));
+        when(attemptRepository.findById(ATTEMPT_ID)).thenReturn(Optional.of(attempt));
+        when(answerRepository.findById(11L)).thenReturn(Optional.of(essayAnswer));
+
+        service.gradeEssay(ATTEMPT_ID, 11L, EssayGradingDto.builder().pointsEarned(8).build(), teacherPrincipal);
+
+        assertEquals(80, attempt.getScore());
+        verify(resultEvents, never()).resultReady(any());
     }
 
     @Test

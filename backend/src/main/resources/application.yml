@@ -86,6 +86,19 @@ app:
   realtime:
     # local = in-memory STOMP broker of this instance; redis = relay exam events to every instance
     mode: ${APP_REALTIME_MODE:local}
+  notifications:
+    exam-results:
+      # true = record an "exam result ready" event (transactional outbox) so the student can be e-mailed
+      enabled: ${APP_NOTIFY_EXAM_RESULTS:false}
+  outbox:
+    # log = only log events (local development); pubsub = publish to Google Cloud Pub/Sub
+    publisher: ${APP_OUTBOX_PUBLISHER:log}
+    relay-interval-ms: ${APP_OUTBOX_RELAY_INTERVAL_MS:5000}
+    batch-size: 50
+    max-attempts: 10
+    pubsub:
+      # full topic name, e.g. projects/my-project/topics/exam-results
+      topic: ${APP_OUTBOX_PUBSUB_TOPIC:}
   exam:
     finalizer:
       # Background job that submits attempts whose time ran out while the student was away.

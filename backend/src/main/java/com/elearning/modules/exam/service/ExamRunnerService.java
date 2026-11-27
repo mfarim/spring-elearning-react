@@ -37,6 +37,7 @@ public class ExamRunnerService {
     private final ExamAnswerRepository answerRepository;
     private final StudentRepository studentRepository;
     private final ExamRealtimeService realtimeService;
+    private final ExamResultEvents resultEvents;
 
     /** Attempt states after which no more answers are accepted. */
     private static final Set<AttemptStatus> FINISHED_STATUSES = EnumSet.of(
@@ -276,6 +277,10 @@ public class ExamRunnerService {
         attempt.setFinishedAt(LocalDateTime.now());
 
         ExamAttempt savedAttempt = attemptRepository.save(attempt);
+        if (savedAttempt.getStatus() == AttemptStatus.completed) {
+            // Fully auto-graded: the result is final now. Essays wait for gradeEssay.
+            resultEvents.resultReady(savedAttempt);
+        }
 
         realtimeService.broadcastExamEvent(exam.getId(), "EXAM_SUBMITTED", Map.of(
                 "attemptId", savedAttempt.getId(),
@@ -326,11 +331,17 @@ public class ExamRunnerService {
         // The attempt is only complete once every manually graded answer has a grade.
         boolean stillPending = answers.stream().anyMatch(a -> a.getCorrect() == null);
 
+        AttemptStatus previousStatus = attempt.getStatus();
         int score = AnswerGrader.scorePercent(totalEarned, totalPossible);
         attempt.setScore(score);
         attempt.setPassed(score >= attempt.getExamination().getPassingScore());
         attempt.setStatus(stillPending ? AttemptStatus.needs_grading : AttemptStatus.completed);
         attemptRepository.save(attempt);
+
+        // Announce the result once, when the last pending answer is graded (not on later re-grades).
+        if (previousStatus != AttemptStatus.completed && attempt.getStatus() == AttemptStatus.completed) {
+            resultEvents.resultReady(attempt);
+        }
     }
 
     /**
