@@ -155,12 +155,12 @@ BEGIN
     -- Questions
     INSERT INTO questions (examination_id, question_text, question_type, options, correct_answer, points)
     VALUES
-    (v_exam1, 'Jika matriks A berordo 2x2 memiliki determinan 5, maka nilai dari determinan 2A adalah...', 'multiple_choice', '{"A": "10", "B": "20", "C": "25", "D": "40", "E": "50"}'::jsonb, '20', 20),
-    (v_exam1, 'Dua garis sejajar memiliki gradien yang sama besar.', 'true_false', '{"Benar": "Benar", "Salah": "Salah"}'::jsonb, 'Benar', 20),
+    (v_exam1, 'Jika matriks A berordo 2x2 memiliki determinan 5, maka nilai dari determinan 2A adalah...', 'multiple_choice', '["10", "20", "25", "40", "50"]'::jsonb, '20', 20),
+    (v_exam1, 'Dua garis sejajar memiliki gradien yang sama besar.', 'true_false', '["Benar", "Salah"]'::jsonb, 'Benar', 20),
     (v_exam1, 'Jelaskan konsep invers matriks dan sebutkan syarat sebuah matriks memiliki invers!', 'essay', NULL, 'Matriks memiliki invers jika determinan != 0 (non-singular).', 60),
 
-    (v_exam2, 'Anotasi Spring Boot yang digunakan untuk menandai kelas sebagai REST Controller adalah...', 'multiple_choice', '{"A": "@Controller", "B": "@RestController", "C": "@Service", "D": "@Component", "E": "@Endpoint"}'::jsonb, '@RestController', 30),
-    (v_exam2, 'React hook apa yang digunakan untuk mengelola efek samping seperti data fetching?', 'multiple_choice', '{"A": "useState", "B": "useEffect", "C": "useMemo", "D": "useContext", "E": "useRef"}'::jsonb, 'useEffect', 30),
+    (v_exam2, 'Anotasi Spring Boot yang digunakan untuk menandai kelas sebagai REST Controller adalah...', 'multiple_choice', '["@Controller", "@RestController", "@Service", "@Component", "@Endpoint"]'::jsonb, '@RestController', 30),
+    (v_exam2, 'React hook apa yang digunakan untuk mengelola efek samping seperti data fetching?', 'multiple_choice', '["useState", "useEffect", "useMemo", "useContext", "useRef"]'::jsonb, 'useEffect', 30),
     (v_exam2, 'Jelaskan perbedaan synchronous dan asynchronous dalam konteks pemrosesan Web API!', 'essay', NULL, 'Synchronous blocking, asynchronous non-blocking.', 40);
 
     -- Exam Attempt
