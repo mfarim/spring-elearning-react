@@ -1,0 +1,22 @@
+# Builds both images on Cloud Build (x86_64, what Cloud Run runs) and pushes them to Artifact Registry.
+# Building on an Apple Silicon laptop would produce arm64 images that Cloud Run cannot start.
+#   gcloud builds submit --config deploy/cloudrun/cloudbuild.yaml --substitutions=_REGISTRY=...,_TAG=...
+steps:
+  - id: backend
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGISTRY}/backend:${_TAG}", "backend"]
+    waitFor: ["-"]
+  - id: frontend
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGISTRY}/frontend:${_TAG}", "frontend"]
+    waitFor: ["-"]
+
+images:
+  - "${_REGISTRY}/backend:${_TAG}"
+  - "${_REGISTRY}/frontend:${_TAG}"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 1200s

@@ -1,0 +1,19 @@
+{
+  "name": "sql-export",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Run function: nightly Cloud SQL export to Cloud Storage (HTTP, invoked by Cloud Scheduler).",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "functions-framework --target=sqlExport",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "google-auth-library": "^9.14.0"
+  }
+}

@@ -1,3 +1,5 @@
+docs_backup/
+
 # Operating System
 .DS_Store
 Thumbs.db
@@ -28,3 +30,12 @@ target/
 # Logs & Storage
 *.log
 storage/uploads/
+
+# Terraform (deploy/cloudrun): the state and tfvars hold secrets and project ids
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log

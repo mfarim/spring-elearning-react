@@ -1,0 +1,121 @@
+# Production on Google Cloud: one Compute Engine VM running this file, with
+#   - PostgreSQL on Cloud SQL, reached through the Cloud SQL Auth Proxy container below
+#   - uploads in Cloud Storage (S3-compatible XML API + HMAC key)
+#   - exam result events to Pub/Sub (transactional outbox -> Cloud Run function -> e-mail)
+#   - Redis still in a container (refresh tokens and rate limits only; losing it logs users out)
+#   - images built by Cloud Build and pulled from Artifact Registry (nothing is built on the VM)
+#
+# The .env next to this file is written by deploy/gcp/vm/render-env.sh from Secret Manager.
+# Walkthrough: deploy/gcp/README.md
+
+x-logging: &gcp-logging
+  # Container logs go to Cloud Logging; `docker logs` keeps working (Docker's dual logging).
+  driver: gcplogs
+  options:
+    gcp-log-cmd: "false"
+
+services:
+  cloud-sql-proxy:
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0-alpine
+    container_name: elearning-cloud-sql-proxy
+    restart: always
+    # Authenticates with the VM's service account (roles/cloudsql.client) through the metadata server;
+    # the connection to Cloud SQL is TLS with an ephemeral certificate. No password file, no key file.
+    command:
+      - "--address=0.0.0.0"
+      - "--port=5432"
+      - "--health-check"
+      - "--http-address=0.0.0.0"
+      - "--http-port=9090"
+      - "${CLOUD_SQL_INSTANCE:?CLOUD_SQL_INSTANCE is required (project:region:instance)}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9090/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *gcp-logging
+    networks:
+      - elearning-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: elearning-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging: *gcp-logging
+    networks:
+      - elearning-network
+
+  backend:
+    image: ${REGISTRY:?REGISTRY is required}/backend:${IMAGE_TAG:-latest}
+    container_name: elearning-backend
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://cloud-sql-proxy:5432/${POSTGRES_DB:-elearning}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-elearning}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      # Uploads: Cloud Storage through its S3-compatible API
+      APP_STORAGE_TYPE: s3
+      APP_STORAGE_S3_ENDPOINT: https://storage.googleapis.com
+      APP_STORAGE_S3_REGION: ${APP_STORAGE_S3_REGION:-auto}
+      APP_STORAGE_S3_PATH_STYLE: "true"
+      APP_STORAGE_S3_BUCKET: ${UPLOADS_BUCKET:?UPLOADS_BUCKET is required}
+      APP_STORAGE_S3_ACCESS_KEY: ${GCS_HMAC_ACCESS_ID:?GCS_HMAC_ACCESS_ID is required}
+      APP_STORAGE_S3_SECRET_KEY: ${GCS_HMAC_SECRET:?GCS_HMAC_SECRET is required}
+      # Exam result e-mails
+      APP_NOTIFY_EXAM_RESULTS: ${APP_NOTIFY_EXAM_RESULTS:-true}
+      APP_OUTBOX_PUBLISHER: pubsub
+      APP_OUTBOX_PUBSUB_TOPIC: projects/${GCP_PROJECT:?GCP_PROJECT is required}/topics/exam-results
+      APP_CORS_ALLOWED_ORIGINS: https://${DOMAIN:?DOMAIN is required}
+      APP_DEMO_MODE: ${APP_DEMO_MODE:-false}
+      APP_REGISTRATION_ENABLED: ${APP_REGISTRATION_ENABLED:-false}
+      SPRINGDOC_ENABLED: "false"
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-INFO}
+      # e2-medium has 4 GB: leave room for Redis, Nginx and the OS
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=60}
+    mem_limit: ${BACKEND_MEM_LIMIT:-2g}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      cloud-sql-proxy:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging: *gcp-logging
+    networks:
+      - elearning-network
+
+  frontend:
+    image: ${REGISTRY}/frontend:${IMAGE_TAG:-latest}
+    container_name: elearning-frontend
+    restart: always
+    ports:
+      # Host Nginx (TLS, Let's Encrypt) proxies to this port; never exposed directly.
+      - "127.0.0.1:${FRONTEND_PORT:-8088}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    logging: *gcp-logging
+    networks:
+      - elearning-network
+
+volumes:
+  redis_data:
+
+networks:
+  elearning-network:
+    driver: bridge

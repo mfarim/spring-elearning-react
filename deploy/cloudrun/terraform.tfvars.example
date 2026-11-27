@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars (git-ignored) and fill in. Every variable is described in variables.tf.
+
+project_id = "your-project-id"
+region     = "asia-southeast1"
+
+# Custom hostname: leave empty for the first deploy, set it once the domain is verified (README.md).
+# domain = "elearning-gcp.example.com"
+
+# true only for a public demo with shared demo accounts
+demo_mode = false
+
+# Scale to zero by default. Raise min_instances to 1 to avoid cold starts (costs more).
+# min_instances = 0
+# max_instances = 3
