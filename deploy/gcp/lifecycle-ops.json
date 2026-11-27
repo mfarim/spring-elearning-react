@@ -1,0 +1,16 @@
+{
+  "rule": [
+    {
+      "action": { "type": "Delete" },
+      "condition": { "age": 30, "matchesPrefix": ["mailer-dedup/"] }
+    },
+    {
+      "action": { "type": "SetStorageClass", "storageClass": "COLDLINE" },
+      "condition": { "age": 30, "matchesPrefix": ["sql-exports/"] }
+    },
+    {
+      "action": { "type": "Delete" },
+      "condition": { "age": 365, "matchesPrefix": ["sql-exports/"] }
+    }
+  ]
+}

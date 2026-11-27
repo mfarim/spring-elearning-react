@@ -1,0 +1,19 @@
+# Files not uploaded to Cloud Build (gcloud builds submit) or to Cloud Run functions.
+.git/
+.github/
+.gcloudignore
+**/node_modules/
+**/target/
+**/dist/
+screenshots/
+docs/
+docs_backup/
+.env
+.env.*
+deploy/gcp/.env.gcp
+# Terraform working files of deploy/cloudrun (the state holds secrets: never upload it to a build)
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+**/*.tfvars.json
