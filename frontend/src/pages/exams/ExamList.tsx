@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
-import type { Exam, Subject, Classroom, Teacher, ApiResponse } from '../../types';
+import type { Exam, ExamType, Subject, Classroom, Teacher, ApiResponse } from '../../types';
 import { apiErrorMessage } from '../../utils/errors';
 import {
   FileCheck2,
@@ -14,9 +14,40 @@ import {
   X,
   FileQuestion,
   Hourglass,
+  Edit2,
+  RotateCcw,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useI18n } from '../../i18n';
+import { useI18n, type MessageKey } from '../../i18n';
+
+const EXAM_TYPE_LABELS: Record<ExamType, MessageKey> = {
+  quiz: 'examList.typeQuiz',
+  uts: 'examList.typeUts',
+  uas: 'examList.typeUas',
+  praktik: 'examList.typePraktik',
+  tryout: 'examList.typeTryout',
+};
+const EXAM_TYPES = Object.keys(EXAM_TYPE_LABELS) as ExamType[];
+
+const EMPTY_FORM = {
+  title: '',
+  subjectId: '',
+  classroomId: '',
+  teacherId: '',
+  type: 'quiz' as ExamType,
+  durationMinutes: 60,
+  passingScore: 75,
+  startAt: '',
+  endAt: '',
+  shuffleQuestions: true,
+  shuffleOptions: true,
+  showResult: true,
+  allowRetry: false,
+  description: '',
+};
+
+/** "2026-12-01T07:00:00" from the API to the "2026-12-01T07:00" a datetime-local input expects. */
+const toDateTimeInput = (value: string) => value.slice(0, 16);
 
 export const ExamList: React.FC = () => {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -26,6 +57,8 @@ export const ExamList: React.FC = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  // null = the modal creates a new exam; otherwise it edits this one.
+  const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const { user } = useAuthStore();
@@ -39,22 +72,13 @@ export const ExamList: React.FC = () => {
   const isAdmin = user?.roles.includes('ROLE_ADMIN');
   const isTeacher = user?.roles.includes('ROLE_TEACHER');
 
-  const [form, setForm] = useState({
-    title: '',
-    subjectId: '',
-    classroomId: '',
-    teacherId: '',
-    type: 'quiz',
-    durationMinutes: 60,
-    passingScore: 75,
-    startAt: '',
-    endAt: '',
-    shuffleQuestions: true,
-    shuffleOptions: true,
-    showResult: true,
-    allowRetry: false,
-    description: '',
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  /** Changes form fields. A message about the previous values no longer applies, so it is cleared. */
+  const updateForm = (patch: Partial<typeof EMPTY_FORM>) => {
+    setForm((prev) => ({ ...prev, ...patch }));
+    setFormError(null);
+  };
 
   const loadData = async () => {
     try {
@@ -96,6 +120,30 @@ export const ExamList: React.FC = () => {
   };
 
   const openCreateModal = () => {
+    setEditingExam(null);
+    setForm(EMPTY_FORM);
+    setFormError(null);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (exam: Exam) => {
+    setEditingExam(exam);
+    setForm({
+      title: exam.title,
+      subjectId: String(exam.subjectId),
+      classroomId: String(exam.classroomId),
+      teacherId: '',
+      type: exam.type,
+      durationMinutes: exam.durationMinutes,
+      passingScore: exam.passingScore,
+      startAt: toDateTimeInput(exam.startAt),
+      endAt: toDateTimeInput(exam.endAt),
+      shuffleQuestions: exam.shuffleQuestions,
+      shuffleOptions: exam.shuffleOptions,
+      showResult: exam.showResult,
+      allowRetry: exam.allowRetry,
+      description: exam.description || '',
+    });
     setFormError(null);
     setModalOpen(true);
   };
@@ -113,7 +161,8 @@ export const ExamList: React.FC = () => {
         title: form.title,
         subjectId: Number(form.subjectId),
         classroomId: Number(form.classroomId),
-        teacherId: isAdmin && form.teacherId ? Number(form.teacherId) : undefined,
+        // The owner is chosen when an admin creates the exam; editing keeps the owner.
+        teacherId: isAdmin && !editingExam && form.teacherId ? Number(form.teacherId) : undefined,
         type: form.type,
         durationMinutes: Number(form.durationMinutes),
         passingScore: Number(form.passingScore),
@@ -124,14 +173,19 @@ export const ExamList: React.FC = () => {
         showResult: form.showResult,
         allowRetry: form.allowRetry,
         description: form.description,
-        status: 'published',
+        // Editing never changes whether the exam is published; that is the status button on the card.
+        status: editingExam ? editingExam.status : 'published',
       };
 
-      await api.post('/exams', payload);
+      if (editingExam) {
+        await api.put(`/exams/${editingExam.id}`, payload);
+      } else {
+        await api.post('/exams', payload);
+      }
       setModalOpen(false);
       loadData();
     } catch (err) {
-      setFormError(apiErrorMessage(err, t('examList.createFailed')));
+      setFormError(apiErrorMessage(err, editingExam ? t('examList.updateFailed') : t('examList.createFailed')));
     }
   };
 
@@ -207,7 +261,7 @@ export const ExamList: React.FC = () => {
 
                 <h3 className="text-base font-bold text-slate-900 line-clamp-1">{exam.title}</h3>
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                  {t('examList.classLabel')} <strong>{exam.classroomName}</strong> | {t('examList.passingLabel')} <strong>{exam.passingScore}%</strong>
+                  {EXAM_TYPE_LABELS[exam.type] ? t(EXAM_TYPE_LABELS[exam.type]) : exam.type} | {t('examList.classLabel')} <strong>{exam.classroomName}</strong> | {t('examList.passingLabel')} <strong>{exam.passingScore}%</strong>
                 </p>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs text-slate-600">
@@ -234,6 +288,15 @@ export const ExamList: React.FC = () => {
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                 {isAdmin || isTeacher ? (
                   <>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(exam)}
+                      title={t('examList.editExam')}
+                      aria-label={t('examList.editExam')}
+                      className="shrink-0 p-2 rounded-xl text-slate-500 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 transition cursor-pointer"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
                     <Link
                       to={`/exams/${exam.id}/questions`}
                       className="flex-1 text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs transition"
@@ -249,7 +312,7 @@ export const ExamList: React.FC = () => {
                     </Link>
                   </>
                 ) : (
-                  <>
+                  <div className="w-full space-y-2">
                     {exam.studentAttemptStatus === 'needs_grading' ? (
                       <div className="w-full flex items-center space-x-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-sm font-semibold text-amber-800">
                         <Hourglass className="w-4 h-4 shrink-0" />
@@ -283,7 +346,17 @@ export const ExamList: React.FC = () => {
                         <span>{exam.studentAttemptStatus === 'in_progress' ? t('examList.continueExam') : t('examList.startExam')}</span>
                       </Link>
                     )}
-                  </>
+                    {/* Finished, and the teacher allows another attempt: starting again creates a new attempt. */}
+                    {exam.allowRetry && exam.studentAttemptStatus && exam.studentAttemptStatus !== 'in_progress' && (
+                      <Link
+                        to={`/exams/${exam.id}/runner`}
+                        className="w-full text-center border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center space-x-2"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>{t('examList.retryExam')}</span>
+                      </Link>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -291,10 +364,10 @@ export const ExamList: React.FC = () => {
         </div>
       )}
 
-      {/* Create Exam Modal */}
+      {/* Create / Edit Exam Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer"
@@ -302,7 +375,9 @@ export const ExamList: React.FC = () => {
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('examList.modalTitle')}</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">
+              {editingExam ? t('examList.editModalTitle') : t('examList.modalTitle')}
+            </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
@@ -312,7 +387,7 @@ export const ExamList: React.FC = () => {
                   required
                   placeholder={t('examList.examTitlePlaceholder')}
                   value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  onChange={(e) => updateForm({ title: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
@@ -323,7 +398,7 @@ export const ExamList: React.FC = () => {
                   <select
                     required
                     value={form.subjectId}
-                    onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
+                    onChange={(e) => updateForm({ subjectId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">{t('examList.chooseSubject')}</option>
@@ -339,7 +414,7 @@ export const ExamList: React.FC = () => {
                   <select
                     required
                     value={form.classroomId}
-                    onChange={(e) => setForm({ ...form, classroomId: e.target.value })}
+                    onChange={(e) => updateForm({ classroomId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">{t('examList.chooseClass')}</option>
@@ -352,7 +427,7 @@ export const ExamList: React.FC = () => {
                 </div>
               </div>
 
-              {isAdmin && (
+              {isAdmin && !editingExam && (
                 <div>
                   <label htmlFor="exam-owner-teacher" className="block font-semibold text-slate-700 mb-1">
                     {t('examList.ownerTeacher')}
@@ -361,7 +436,7 @@ export const ExamList: React.FC = () => {
                     id="exam-owner-teacher"
                     required
                     value={form.teacherId}
-                    onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
+                    onChange={(e) => updateForm({ teacherId: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="">{t('examList.chooseTeacher')}</option>
@@ -374,6 +449,24 @@ export const ExamList: React.FC = () => {
                 </div>
               )}
 
+              <div>
+                <label htmlFor="exam-type" className="block font-semibold text-slate-700 mb-1">
+                  {t('examList.examType')}
+                </label>
+                <select
+                  id="exam-type"
+                  value={form.type}
+                  onChange={(e) => updateForm({ type: e.target.value as ExamType })}
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                >
+                  {EXAM_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {t(EXAM_TYPE_LABELS[type])}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">{t('examList.duration')}</label>
@@ -383,7 +476,7 @@ export const ExamList: React.FC = () => {
                     min={5}
                     max={240}
                     value={form.durationMinutes}
-                    onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
+                    onChange={(e) => updateForm({ durationMinutes: Number(e.target.value) })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
@@ -395,7 +488,7 @@ export const ExamList: React.FC = () => {
                     min={0}
                     max={100}
                     value={form.passingScore}
-                    onChange={(e) => setForm({ ...form, passingScore: Number(e.target.value) })}
+                    onChange={(e) => updateForm({ passingScore: Number(e.target.value) })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
@@ -408,7 +501,7 @@ export const ExamList: React.FC = () => {
                     type="datetime-local"
                     required
                     value={form.startAt}
-                    onChange={(e) => setForm({ ...form, startAt: e.target.value })}
+                    onChange={(e) => updateForm({ startAt: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
@@ -419,7 +512,7 @@ export const ExamList: React.FC = () => {
                     required
                     min={form.startAt || undefined}
                     value={form.endAt}
-                    onChange={(e) => setForm({ ...form, endAt: e.target.value })}
+                    onChange={(e) => updateForm({ endAt: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
@@ -430,7 +523,7 @@ export const ExamList: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={form.shuffleQuestions}
-                    onChange={(e) => setForm({ ...form, shuffleQuestions: e.target.checked })}
+                    onChange={(e) => updateForm({ shuffleQuestions: e.target.checked })}
                     className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>{t('examList.shuffleQuestions')}</span>
@@ -439,10 +532,19 @@ export const ExamList: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={form.shuffleOptions}
-                    onChange={(e) => setForm({ ...form, shuffleOptions: e.target.checked })}
+                    onChange={(e) => updateForm({ shuffleOptions: e.target.checked })}
                     className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>{t('examList.shuffleOptions')}</span>
+                </label>
+                <label className="col-span-2 flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.allowRetry}
+                    onChange={(e) => updateForm({ allowRetry: e.target.checked })}
+                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>{t('examList.allowRetry')}</span>
                 </label>
               </div>
 
@@ -464,7 +566,7 @@ export const ExamList: React.FC = () => {
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-xs cursor-pointer transition"
                 >
-                  {t('examList.createAndPublish')}
+                  {editingExam ? t('examList.saveChanges') : t('examList.createAndPublish')}
                 </button>
               </div>
             </form>

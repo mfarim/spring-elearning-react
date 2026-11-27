@@ -21,7 +21,7 @@ import { useI18n, t as tNow } from '../../i18n';
 import { LanguageSwitcher } from '../../components/common/LanguageSwitcher';
 import { createAnswerSaver, type AnswerSaver, type SaveState } from './answerSaver';
 
-/** A typed answer is sent after this pause in typing, not on every keystroke. */
+/** A typed answer (essay, short answer) is sent after this pause in typing, not on every keystroke. */
 const ESSAY_SAVE_DELAY_MS = 1000;
 /** The server closes the attempt at this number of violations. */
 const MAX_VIOLATIONS = 5;
@@ -602,6 +602,24 @@ export const ExamRunner: React.FC = () => {
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {currentQ.questionType === 'short_answer' && (
+              <div>
+                <label htmlFor={`short-${currentQ.id}`} className="block text-xs font-semibold text-slate-400 mb-2">
+                  {t('examRunner.shortAnswerLabel')}
+                </label>
+                <input
+                  id={`short-${currentQ.id}`}
+                  type="text"
+                  autoComplete="off"
+                  value={answers[currentQ.id] || ''}
+                  onChange={(e) => handleAnswer(currentQ.id, e.target.value, ESSAY_SAVE_DELAY_MS)}
+                  onBlur={flushAnswers}
+                  placeholder={t('examRunner.shortAnswerPlaceholder')}
+                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-600"
+                />
               </div>
             )}
 
