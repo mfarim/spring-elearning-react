@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/client';
 import type { Exam, Question, ApiResponse } from '../../types';
+import { apiErrorMessage } from '../../utils/errors';
 import {
   ArrowLeft,
   Plus,
@@ -10,14 +11,39 @@ import {
   FileQuestion,
   CheckCircle,
   X,
+  Edit2,
 } from 'lucide-react';
 import { useI18n, type MessageKey } from '../../i18n';
 
 const QUESTION_TYPE_LABELS: Record<Question['questionType'], MessageKey> = {
   multiple_choice: 'examEditor.typeMultipleChoice',
   true_false: 'examEditor.typeTrueFalse',
+  short_answer: 'examEditor.typeShortAnswer',
   essay: 'examEditor.typeEssay',
 };
+
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
+type OptionLetter = (typeof OPTION_LETTERS)[number];
+
+const EMPTY_FORM = {
+  questionText: '',
+  questionType: 'multiple_choice' as Question['questionType'],
+  optA: '',
+  optB: '',
+  optC: '',
+  optD: '',
+  optE: '',
+  // Multiple choice: the letter of the correct option, so retyping an option keeps it marked as the key.
+  correctLetter: '' as OptionLetter | '',
+  // True/false: "Benar" or "Salah". Short answer: the key. Essay: the rubric.
+  correctAnswer: '',
+  points: 1,
+  difficulty: 'medium' as Question['difficulty'],
+  explanation: '',
+};
+type QuestionForm = typeof EMPTY_FORM;
+
+const optionKey = (letter: OptionLetter) => `opt${letter}` as 'optA' | 'optB' | 'optC' | 'optD' | 'optE';
 
 export const ExamEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,23 +54,20 @@ export const ExamEditor: React.FC = () => {
 
   // Modals
   const [modalOpen, setModalOpen] = useState(false);
+  // null = the modal adds a question; otherwise it edits this one.
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [excelModalOpen, setExcelModalOpen] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    questionText: '',
-    questionType: 'multiple_choice' as 'multiple_choice' | 'essay' | 'true_false',
-    optA: '',
-    optB: '',
-    optC: '',
-    optD: '',
-    optE: '',
-    correctAnswer: '',
-    points: 1,
-    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
-    explanation: '',
-  });
+  const [form, setForm] = useState<QuestionForm>(EMPTY_FORM);
+
+  /** Changes form fields. A message about the previous values no longer applies, so it is cleared. */
+  const updateForm = (patch: Partial<QuestionForm>) => {
+    setForm((prev) => ({ ...prev, ...patch }));
+    setFormError(null);
+  };
 
   const loadExamAndQuestions = async () => {
     try {
@@ -66,47 +89,88 @@ export const ExamEditor: React.FC = () => {
     if (id) loadExamAndQuestions();
   }, [id]);
 
+  const openAddModal = () => {
+    setEditingQuestion(null);
+    setForm(EMPTY_FORM);
+    setFormError(null);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (q: Question) => {
+    const options = q.options ?? [];
+    const next: QuestionForm = {
+      ...EMPTY_FORM,
+      questionText: q.questionText,
+      questionType: q.questionType,
+      points: q.points,
+      difficulty: q.difficulty,
+      explanation: q.explanation ?? '',
+    };
+    if (q.questionType === 'multiple_choice') {
+      OPTION_LETTERS.forEach((letter, index) => {
+        next[optionKey(letter)] = options[index] ?? '';
+      });
+      // The key is stored as the option text; older imports may hold the letter instead.
+      const byText = options.findIndex((opt) => opt === q.correctAnswer);
+      const byLetter = OPTION_LETTERS.findIndex((letter) => letter === q.correctAnswer);
+      next.correctLetter = OPTION_LETTERS[byText >= 0 ? byText : byLetter] ?? '';
+    } else {
+      next.correctAnswer = q.correctAnswer ?? '';
+    }
+    setEditingQuestion(q);
+    setForm(next);
+    setFormError(null);
+    setModalOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      let options: string[] = [];
-      let correctAnswer = form.correctAnswer;
+    setFormError(null);
 
-      if (form.questionType === 'multiple_choice') {
-        options = [form.optA, form.optB, form.optC, form.optD, form.optE].filter(Boolean);
-      } else if (form.questionType === 'true_false') {
-        options = ['Benar', 'Salah'];
+    let options: string[] = [];
+    let correctAnswer = form.correctAnswer.trim();
+
+    if (form.questionType === 'multiple_choice') {
+      options = OPTION_LETTERS.map((letter) => form[optionKey(letter)].trim()).filter(Boolean);
+      correctAnswer = form.correctLetter ? form[optionKey(form.correctLetter)].trim() : '';
+      if (!correctAnswer) {
+        setFormError(t('examEditor.chooseCorrectOption'));
+        return;
       }
+    } else if (form.questionType === 'true_false') {
+      options = ['Benar', 'Salah'];
+      if (!correctAnswer) {
+        setFormError(t('examEditor.chooseCorrectOption'));
+        return;
+      }
+    }
 
-      const payload = {
-        examinationId: Number(id),
-        questionText: form.questionText,
-        questionType: form.questionType,
-        options,
-        correctAnswer,
-        points: Number(form.points),
-        difficulty: form.difficulty,
-        explanation: form.explanation,
-      };
+    const payload = {
+      examinationId: Number(id),
+      questionText: form.questionText,
+      questionType: form.questionType,
+      options,
+      correctAnswer,
+      points: Number(form.points),
+      difficulty: form.difficulty,
+      explanation: form.explanation,
+      // The update replaces every field, so pass the media paths through unchanged.
+      audioPath: editingQuestion?.audioPath,
+      imagePath: editingQuestion?.imagePath,
+    };
 
-      await api.post(`/exams/${id}/questions`, payload);
+    try {
+      if (editingQuestion) {
+        await api.put(`/exams/${id}/questions/${editingQuestion.id}`, payload);
+      } else {
+        await api.post(`/exams/${id}/questions`, payload);
+      }
       setModalOpen(false);
-      setForm({
-        questionText: '',
-        questionType: 'multiple_choice',
-        optA: '',
-        optB: '',
-        optC: '',
-        optD: '',
-        optE: '',
-        correctAnswer: '',
-        points: 1,
-        difficulty: 'medium',
-        explanation: '',
-      });
+      setEditingQuestion(null);
+      setForm(EMPTY_FORM);
       loadExamAndQuestions();
-    } catch (err: any) {
-      alert(err.response?.data?.message || t('examEditor.addFailed'));
+    } catch (err) {
+      setFormError(apiErrorMessage(err, editingQuestion ? t('examEditor.updateFailed') : t('examEditor.addFailed')));
     }
   };
 
@@ -160,7 +224,7 @@ export const ExamEditor: React.FC = () => {
             <span>{t('examEditor.excelImport')}</span>
           </button>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openAddModal}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -211,14 +275,24 @@ export const ExamEditor: React.FC = () => {
                     | {t('examEditor.pointsLabel')} <strong>{q.points}</strong>
                   </span>
                 </div>
-                <button
-                  onClick={() => handleDeleteQuestion(q.id)}
-                  title={t('examEditor.deleteQuestion')}
-                  aria-label={t('examEditor.deleteQuestion')}
-                  className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => openEditModal(q)}
+                    title={t('examEditor.editQuestion')}
+                    aria-label={t('examEditor.editQuestion')}
+                    className="text-slate-400 hover:text-emerald-700 p-1 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteQuestion(q.id)}
+                    title={t('examEditor.deleteQuestion')}
+                    aria-label={t('examEditor.deleteQuestion')}
+                    className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <div className="text-sm font-semibold text-slate-900 whitespace-pre-wrap">{q.questionText}</div>
@@ -258,7 +332,7 @@ export const ExamEditor: React.FC = () => {
         </div>
       )}
 
-      {/* Add Question Modal */}
+      {/* Add / Edit Question Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -269,7 +343,9 @@ export const ExamEditor: React.FC = () => {
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">{t('examEditor.modalTitle')}</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">
+              {editingQuestion ? t('examEditor.editModalTitle') : t('examEditor.modalTitle')}
+            </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
@@ -277,11 +353,19 @@ export const ExamEditor: React.FC = () => {
                   <label className="block font-semibold text-slate-700 mb-1">{t('examEditor.questionType')}</label>
                   <select
                     value={form.questionType}
-                    onChange={(e) => setForm({ ...form, questionType: e.target.value as any })}
+                    onChange={(e) =>
+                      // The key of one type means nothing for another (a letter, Benar/Salah, a rubric).
+                      updateForm({
+                        questionType: e.target.value as Question['questionType'],
+                        correctAnswer: '',
+                        correctLetter: '',
+                      })
+                    }
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="multiple_choice">{t('examEditor.optionMultipleChoice')}</option>
                     <option value="true_false">{t('examEditor.optionTrueFalse')}</option>
+                    <option value="short_answer">{t('examEditor.optionShortAnswer')}</option>
                     <option value="essay">{t('examEditor.optionEssay')}</option>
                   </select>
                 </div>
@@ -293,7 +377,7 @@ export const ExamEditor: React.FC = () => {
                     min={1}
                     max={50}
                     value={form.points}
-                    onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
+                    onChange={(e) => updateForm({ points: Number(e.target.value) })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
@@ -305,7 +389,7 @@ export const ExamEditor: React.FC = () => {
                   rows={3}
                   required
                   value={form.questionText}
-                  onChange={(e) => setForm({ ...form, questionText: e.target.value })}
+                  onChange={(e) => updateForm({ questionText: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder={t('examEditor.questionTextPlaceholder')}
                 />
@@ -314,8 +398,8 @@ export const ExamEditor: React.FC = () => {
               {form.questionType === 'multiple_choice' && (
                 <div className="space-y-3 pt-2 border-t border-slate-100">
                   <div className="font-semibold text-slate-700">{t('examEditor.answerOptions')}</div>
-                  {['A', 'B', 'C', 'D', 'E'].map((letter) => {
-                    const keyName = `opt${letter}` as keyof typeof form;
+                  {OPTION_LETTERS.map((letter) => {
+                    const keyName = optionKey(letter);
                     return (
                       <div key={letter} className="flex items-center space-x-2">
                         <span className="w-7 h-7 rounded-lg bg-slate-100 font-bold text-xs flex items-center justify-center">
@@ -325,16 +409,18 @@ export const ExamEditor: React.FC = () => {
                           type="text"
                           required={letter === 'A' || letter === 'B'}
                           placeholder={t('examEditor.optionPlaceholder', { letter })}
-                          value={String(form[keyName])}
-                          onChange={(e) => setForm({ ...form, [keyName]: e.target.value })}
+                          aria-label={t('examEditor.optionPlaceholder', { letter })}
+                          value={form[keyName]}
+                          onChange={(e) => updateForm({ [keyName]: e.target.value })}
                           className="flex-1 border border-slate-300 rounded-xl px-3 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-xs"
                         />
                         <label className="flex items-center space-x-1 text-xs text-slate-600 cursor-pointer">
                           <input
                             type="radio"
                             name="correctAnswerKey"
-                            checked={form.correctAnswer === String(form[keyName]) && form.correctAnswer !== ''}
-                            onChange={() => setForm({ ...form, correctAnswer: String(form[keyName]) })}
+                            checked={form.correctLetter === letter}
+                            disabled={!form[keyName].trim()}
+                            onChange={() => updateForm({ correctLetter: letter })}
                             className="text-emerald-600 focus:ring-emerald-500"
                           />
                           <span>{t('examEditor.correct')}</span>
@@ -355,7 +441,7 @@ export const ExamEditor: React.FC = () => {
                         name="tf"
                         value="Benar"
                         checked={form.correctAnswer === 'Benar'}
-                        onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                        onChange={(e) => updateForm({ correctAnswer: e.target.value })}
                         className="text-emerald-600 focus:ring-emerald-500"
                       />
                       <span>{t('examEditor.trueLabel')}</span>
@@ -366,7 +452,7 @@ export const ExamEditor: React.FC = () => {
                         name="tf"
                         value="Salah"
                         checked={form.correctAnswer === 'Salah'}
-                        onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                        onChange={(e) => updateForm({ correctAnswer: e.target.value })}
                         className="text-emerald-600 focus:ring-emerald-500"
                       />
                       <span>{t('examEditor.falseLabel')}</span>
@@ -375,17 +461,59 @@ export const ExamEditor: React.FC = () => {
                 </div>
               )}
 
+              {form.questionType === 'short_answer' && (
+                <div className="pt-2 border-t border-slate-100">
+                  <label htmlFor="question-answer-key" className="block font-semibold text-slate-700 mb-1">
+                    {t('examEditor.answerKey')}
+                  </label>
+                  <input
+                    id="question-answer-key"
+                    type="text"
+                    required
+                    value={form.correctAnswer}
+                    onChange={(e) => updateForm({ correctAnswer: e.target.value })}
+                    placeholder={t('examEditor.answerKeyPlaceholder')}
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">{t('examEditor.answerKeyHint')}</p>
+                </div>
+              )}
+
               {form.questionType === 'essay' && (
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">{t('examEditor.rubric')}</label>
+                  <label htmlFor="question-rubric" className="block font-semibold text-slate-700 mb-1">
+                    {t('examEditor.rubric')}
+                  </label>
                   <textarea
+                    id="question-rubric"
                     rows={2}
+                    required
                     value={form.correctAnswer}
-                    onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                    onChange={(e) => updateForm({ correctAnswer: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     placeholder={t('examEditor.rubricPlaceholder')}
                   />
                 </div>
+              )}
+
+              <div>
+                <label htmlFor="question-explanation" className="block font-semibold text-slate-700 mb-1">
+                  {t('examEditor.explanation')}
+                </label>
+                <textarea
+                  id="question-explanation"
+                  rows={2}
+                  value={form.explanation}
+                  onChange={(e) => updateForm({ explanation: e.target.value })}
+                  className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  placeholder={t('examEditor.explanationPlaceholder')}
+                />
+              </div>
+
+              {formError && (
+                <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+                  {formError}
+                </p>
               )}
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">

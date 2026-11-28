@@ -142,14 +142,14 @@ BEGIN
     (v_budi_teacher_id, v_subj_mtk, v_class_x1, 'Latihan Soal Matriks dan Vektor Ruang', 'Kerjakan soal latihan halaman 45-50 buku pegangan siswa.', 'Tulis tangan jawaban di kertas folio lalu unggah foto/scan PDF.', 100, CURRENT_TIMESTAMP + INTERVAL '5 days', 'published');
 
     -- Examinations
-    INSERT INTO examinations (teacher_id, subject_id, classroom_id, title, description, type, duration_minutes, passing_score, start_at, end_at, total_questions, status, shuffle_questions, shuffle_options)
+    INSERT INTO examinations (teacher_id, subject_id, classroom_id, title, description, type, duration_minutes, passing_score, start_at, end_at, total_questions, status, shuffle_questions, shuffle_options, show_result)
     VALUES
-    (v_budi_teacher_id, v_subj_mtk, v_class_x1, 'Penilaian Akhir Semester (PAS) Matematika Wajib', 'Ujian CBT terintegrasi proctoring anti-cheat', 'uas', 90, 75, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '30 days', 5, 'published', TRUE, TRUE)
+    (v_budi_teacher_id, v_subj_mtk, v_class_x1, 'Penilaian Akhir Semester (PAS) Matematika Wajib', 'Ujian CBT terintegrasi proctoring anti-cheat', 'uas', 90, 75, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '30 days', 5, 'published', TRUE, TRUE, TRUE)
     RETURNING id INTO v_exam1;
 
-    INSERT INTO examinations (teacher_id, subject_id, classroom_id, title, description, type, duration_minutes, passing_score, start_at, end_at, total_questions, status, shuffle_questions, shuffle_options)
+    INSERT INTO examinations (teacher_id, subject_id, classroom_id, title, description, type, duration_minutes, passing_score, start_at, end_at, total_questions, status, shuffle_questions, shuffle_options, show_result)
     VALUES
-    (v_budi_teacher_id, v_subj_pwb, v_class_x1, 'Ujian Harian: Pemrograman Web & Java 21', 'Kuis pemahaman konsep OOP, Spring Beans, dan React Hooks', 'quiz', 60, 75, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '30 days', 3, 'published', TRUE, TRUE)
+    (v_budi_teacher_id, v_subj_pwb, v_class_x1, 'Ujian Harian: Pemrograman Web & Java 21', 'Kuis pemahaman konsep OOP, Spring Beans, dan React Hooks', 'quiz', 60, 75, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '30 days', 3, 'published', TRUE, TRUE, TRUE)
     RETURNING id INTO v_exam2;
 
     -- Questions

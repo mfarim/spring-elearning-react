@@ -37,7 +37,7 @@ A full-featured web-based **E-Learning** and **Computer Based Test (CBT)** platf
 | **Dashboard** | Teaching metrics, scheduled examinations, active assignments, and recent activity |
 | **Learning Materials** | CRUD + multi-type content (Document, Video, Text, Link, Audio) + student view tracking |
 | **Assignments** | CRUD + deadline dates + instructions + submission grading with feedback |
-| **CBT Examinations** | CRUD + duration timer + passing grade (KKM) + randomize questions/options + retry toggles |
+| **CBT Examinations** | CRUD + duration timer + passing grade (KKM) + randomize questions/options + retry toggles + show or hide the score from students |
 | **Question Builder** | Multiple Choice (A-E), True/False, Essay + points allocation + **📥 Excel Import** |
 | **Live Telemetry Monitor** | Real-time WebSocket candidate status, question progress bar, and anti-cheat flag alerts |
 | **Exam Hall Tickets** | Print ready-to-use official CBT student candidate cards with NIS barcodes |
@@ -174,7 +174,7 @@ graph TD
 | **A04: Insecure Design** | Examination answer keys and explanations strictly stripped (`null`) from student payloads; examination duration deadlines enforced on the server-side, not trusting client clocks. |
 | **A05: Security Misconfiguration** | Spring Boot Actuator endpoints strictly blocked (`404`) from public Nginx reverse proxy; all Docker service ports bound to loopback `127.0.0.1`; security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) enforced. |
 | **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.5.7, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker containers running under non-root `spring:spring` user. |
-| **A07: Identification Failures** | **Bucket4j Login Rate Limiter**: 5 attempts per minute per IP address (`CF-Connecting-IP` / `X-Forwarded-For`) and per account email, returning `429 Too Many Requests` with `Retry-After` header. |
+| **A07: Identification Failures** | **Login Rate Limiter**: 5 attempts per minute per account email and 100 per minute per IP address (sized for a computer lab behind one public IP, `APP_RATE_LIMIT_LOGIN_PER_IP`), returning `429 Too Many Requests` with `Retry-After` header. Signed-in API calls are limited per user, not per IP. |
 | **A08: Software & Data Integrity** | Strict file upload extension whitelist (`.pdf`, `.docx`, `.xlsx`, `.jpg`, `.png`, etc.); executable and scriptable types (`.html`, `.svg`, `.exe`, `.sh`) explicitly rejected to prevent Stored XSS; safe download `Content-Disposition`. |
 | **A09: Logging & Monitoring** | Anti-cheat proctoring violation alerts logged with student NIS; internal `/actuator/health` probe available for container healthchecks. |
 | **A10: SSRF** | Zero user-controlled outbound HTTP requests from backend services. |
@@ -373,7 +373,8 @@ For production deployments:
 8. The refresh token is an httpOnly `Secure` cookie, so serve the app over HTTPS. Set `APP_REFRESH_COOKIE_SECURE=false` only for plain-HTTP local runs (the local `docker-compose.yml` already does).
 9. The SPA sends a Content-Security-Policy. If you enable analytics, allow its hosts on the frontend container, e.g. `CSP_SCRIPT_SRC_EXTRA="https://www.googletagmanager.com"` and `CSP_CONNECT_SRC_EXTRA="https://*.google-analytics.com"`.
 10. **Several backend instances:** set `APP_REALTIME_MODE=redis`, `APP_RATE_LIMIT_STORE=redis`, and `APP_STORAGE_TYPE=s3` with `APP_STORAGE_S3_BUCKET` (plus `APP_STORAGE_S3_ENDPOINT` and `APP_STORAGE_S3_PATH_STYLE=true` for MinIO), and enable sticky sessions for `/ws`. Details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-limits-and-roadmap).
-11. **Real client IP / rate limiting:** the backend trusts `X-Forwarded-For` only from internal proxies (Docker network). If the site is behind Cloudflare, restore the visitor IP on the host Nginx, otherwise all users share Cloudflare's IPs for rate limiting:
+11. **Time zone:** exam schedules and deadlines are compared against the backend's clock. The image runs in `Asia/Jakarta` (WIB); set `APP_TIMEZONE=Asia/Makassar` (WITA) or `Asia/Jayapura` (WIT) for other regions. Change it outside exam hours: attempts in progress are timed against this clock.
+12. **Real client IP / rate limiting:** the backend trusts `X-Forwarded-For` only from internal proxies (Docker network). If the site is behind Cloudflare, restore the visitor IP on the host Nginx, otherwise all users share Cloudflare's IPs for rate limiting:
    ```nginx
    # http {} block of the host nginx — keep the list in sync with https://www.cloudflare.com/ips/
    set_real_ip_from 173.245.48.0/20;   # ...add every Cloudflare IPv4/IPv6 range

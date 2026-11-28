@@ -108,9 +108,10 @@ export interface LearningMaterial {
   createdAt: string;
 }
 
-export type ExamType = 'quiz' | 'midterm' | 'final' | 'tryout';
+/** Same values as the backend enum (com.elearning.common.enums.ExamType). */
+export type ExamType = 'quiz' | 'uts' | 'uas' | 'praktik' | 'tryout';
 export type ExamStatus = 'draft' | 'published' | 'archived';
-export type AttemptStatus = 'in_progress' | 'submitted' | 'needs_grading' | 'completed';
+export type AttemptStatus = 'in_progress' | 'submitted' | 'needs_grading' | 'completed' | 'force_finished';
 
 export interface Exam {
   id: number;
@@ -145,7 +146,7 @@ export interface Question {
   id: number;
   examinationId: number;
   questionText: string;
-  questionType: 'multiple_choice' | 'essay' | 'true_false';
+  questionType: 'multiple_choice' | 'essay' | 'short_answer' | 'true_false';
   options?: string[];
   points: number;
   difficulty: 'easy' | 'medium' | 'hard';

@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,12 +74,19 @@ public class ExamRunnerController {
             @PathVariable Long attemptId,
             @AuthenticationPrincipal UserPrincipal principal) {
         ExamAttempt attempt = examRunnerService.submitAttempt(attemptId, principal);
-        return ResponseEntity.ok(ApiResponse.success(Map.of(
-                "attemptId", attempt.getId(),
-                "status", attempt.getStatus(),
-                "score", attempt.getScore() != null ? attempt.getScore() : 0,
-                "passed", attempt.getPassed() != null ? attempt.getPassed() : false
-        ), "Exam submitted successfully"));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("attemptId", attempt.getId());
+        result.put("status", attempt.getStatus());
+        if (examRunnerService.isResultVisibleToStudent(attempt.getId())) {
+            result.put("score", attempt.getScore() != null ? attempt.getScore() : 0);
+            result.put("passed", attempt.getPassed() != null ? attempt.getPassed() : false);
+            result.put("resultHidden", false);
+        } else {
+            // The exam does not show results: the student only learns that the attempt was received.
+            result.put("resultHidden", true);
+        }
+        return ResponseEntity.ok(ApiResponse.success(result, "Exam submitted successfully"));
     }
 
     @PostMapping("/attempts/{attemptId}/answers/{answerId}/grade-essay")

@@ -83,6 +83,14 @@ app:
   rate-limit:
     # memory = per instance; redis = shared by all instances
     store: ${APP_RATE_LIMIT_STORE:memory}
+    # Requests per minute. Signed-in users are counted per account, so a computer lab behind one public
+    # IP address does not share a single budget. Only requests without a valid token are counted per IP.
+    login-per-ip: ${APP_RATE_LIMIT_LOGIN_PER_IP:100}          # login attempts from one IP address
+    login-per-email: ${APP_RATE_LIMIT_LOGIN_PER_EMAIL:5}      # login attempts for one account (brute force)
+    auth-per-ip: ${APP_RATE_LIMIT_AUTH_PER_IP:200}            # login + register + change-password from one IP
+    exam-per-user: ${APP_RATE_LIMIT_EXAM_PER_USER:120}        # answer autosave + submit of one student
+    api-per-user: ${APP_RATE_LIMIT_API_PER_USER:120}          # every other API call of one user
+    anonymous-per-ip: ${APP_RATE_LIMIT_ANONYMOUS_PER_IP:300}  # API calls without a valid access token
   realtime:
     # local = in-memory STOMP broker of this instance; redis = relay exam events to every instance
     mode: ${APP_REALTIME_MODE:local}

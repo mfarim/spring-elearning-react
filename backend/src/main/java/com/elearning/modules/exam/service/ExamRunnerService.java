@@ -391,6 +391,17 @@ public class ExamRunnerService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Whether the student may see the score of this attempt: the exam's "show result" setting. The teacher
+     * can turn it on later to release the results. An unknown attempt shows nothing.
+     */
+    @Transactional(readOnly = true)
+    public boolean isResultVisibleToStudent(Long attemptId) {
+        return attemptRepository.findById(attemptId)
+                .map(attempt -> attempt.getExamination().isShowResult())
+                .orElse(false);
+    }
+
     private ExamAttempt createNewAttempt(Examination exam, Student student, int attemptNumber) {
         ExamAttempt attempt = ExamAttempt.builder()
                 .examination(exam)

@@ -105,8 +105,7 @@ public class ExamService {
 
     @Transactional
     public ExamResponse createExam(ExamDto dto, UserPrincipal principal) {
-        Teacher teacher = teacherRepository.findByUserId(principal.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Teacher profile not found"));
+        Teacher teacher = resolveOwnerTeacher(dto.getTeacherId(), principal);
 
         Subject subject = subjectRepository.findById(dto.getSubjectId())
                 .orElseThrow(() -> new IllegalArgumentException("Subject not found: " + dto.getSubjectId()));
@@ -396,6 +395,22 @@ public class ExamService {
         return result;
     }
 
+    /**
+     * A teacher owns the exams they create. An admin has no teacher profile, so an admin names the
+     * owning teacher with {@code teacherId}; a teacher cannot create exams on behalf of someone else.
+     */
+    private Teacher resolveOwnerTeacher(Long teacherId, UserPrincipal principal) {
+        boolean isAdmin = principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin && teacherId != null) {
+            return teacherRepository.findById(teacherId)
+                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found: " + teacherId));
+        }
+        return teacherRepository.findByUserId(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException(isAdmin
+                        ? "Choose the teacher who owns this exam"
+                        : "Teacher profile not found"));
+    }
+
     private void validateTeacherOwnership(Examination exam, UserPrincipal principal) {
         boolean isAdmin = principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (!isAdmin && !exam.getTeacher().getUser().getId().equals(principal.getId())) {
@@ -414,8 +429,11 @@ public class ExamService {
             if (attempt.isPresent()) {
                 ExamAttempt att = attempt.get();
                 attemptStatus = att.getStatus().name();
-                studentScore = att.getScore();
-                studentPassed = att.getPassed();
+                // The score stays hidden from the student until the exam shows results.
+                if (e.isShowResult()) {
+                    studentScore = att.getScore();
+                    studentPassed = att.getPassed();
+                }
                 currentAttemptId = att.getId();
             }
         }

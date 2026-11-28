@@ -37,7 +37,7 @@ Platform web **E-Learning** dan **Computer Based Test (CBT)** berfitur lengkap u
 | **Dashboard** | Statistik mengajar, jadwal ujian CBT mendatang, tugas aktif, dan aktivitas terkini |
 | **Materi Belajar** | CRUD + 5 tipe konten (Dokumen, Video, Teks, Link, Audio) + pelacakan pembaca siswa |
 | **Tugas Siswa** | CRUD + tenggat waktu + petunjuk pengerjaan + penilaian submission & umpan balik |
-| **Ujian CBT** | CRUD + durasi timer + KKM (passing grade) + acak soal/opsi + izin remidi (retry) |
+| **Ujian CBT** | CRUD + durasi timer + KKM (passing grade) + acak soal/opsi + izin remidi (retry) + tampilkan atau sembunyikan nilai dari siswa |
 | **Bank & Editor Soal** | Pilihan Ganda (A-E), Benar/Salah, Esai + bobot poin + **📥 Import Soal Excel** |
 | **Monitor Telemetri** | Pemantauan progres pengerjaan kandidat, indikator soal terjawab, dan deteksi pelanggaran anti-cheat real-time |
 | **Cetak Kartu Ujian** | Cetak kartu resmi peserta ujian CBT yang siap digunakan lengkap dengan barcode NIS |
@@ -174,7 +174,7 @@ graph TD
 | **A04: Insecure Design** | Kunci jawaban dan pembahasan disembunyikan (`null`) dari payload siswa saat ujian; durasi ujian dikalkulasi di sisi server (*server-side deadline*), tidak mempercayai jam lokal klien. |
 | **A05: Security Misconfiguration** | Endpoint Actuator diblokir (`404`) dari Nginx publik; semua port Docker internal diikat ke loopback `127.0.0.1`; header keamanan HTTP (`nosniff`, `SAMEORIGIN`) aktif. |
 | **A06: Vulnerable Components** | Java 21 LTS, Spring Boot 3.5.7, PostgreSQL 16, Redis 7, React 19. Multi-stage Docker container berjalan menggunakan pengguna non-root `spring:spring`. |
-| **A07: Identification Failures** | **Rate Limiter Login Bucket4j**: Dibatasi maksimal 5 percobaan per menit per alamat IP (`CF-Connecting-IP` / `X-Forwarded-For`) dan per email akun, menghasilkan HTTP `429 Too Many Requests` disertai header `Retry-After`. |
+| **A07: Identification Failures** | **Rate Limiter Login**: Dibatasi 5 percobaan per menit per email akun dan 100 per menit per alamat IP (cukup untuk satu lab komputer di balik satu IP publik, `APP_RATE_LIMIT_LOGIN_PER_IP`), menghasilkan HTTP `429 Too Many Requests` disertai header `Retry-After`. Panggilan API setelah login dibatasi per pengguna, bukan per IP. |
 | **A08: Software & Data Integrity** | Whitelist ketat ekstensi file upload (`.pdf`, `.docx`, `.xlsx`, `.jpg`, `.png`, dll); ekstensi yang dapat dieksekusi atau berisi skrip (`.html`, `.svg`, `.exe`, `.sh`) ditolak keras untuk mencegah Stored XSS; unduhan disajikan dengan `Content-Disposition` aman. |
 | **A09: Logging & Monitoring** | Log pelanggaran anti-cheat ujian tercatat lengkap dengan identitas NIS siswa; probe internal `/actuator/health` tersedia untuk healthcheck container. |
 | **A10: SSRF** | Tidak ada fitur backend yang melakukan pemanggilan HTTP outbound ke URL luar dari input pengguna. |
@@ -372,7 +372,8 @@ Untuk menerapkan ke server production:
 8. Refresh token disimpan di cookie httpOnly `Secure`, jadi aplikasi harus diakses lewat HTTPS. Set `APP_REFRESH_COOKIE_SECURE=false` hanya untuk menjalankan lokal tanpa HTTPS (`docker-compose.yml` lokal sudah mengaturnya).
 9. SPA mengirim header Content-Security-Policy. Jika memakai analytics, izinkan host-nya di container frontend, misalnya `CSP_SCRIPT_SRC_EXTRA="https://www.googletagmanager.com"` dan `CSP_CONNECT_SRC_EXTRA="https://*.google-analytics.com"`.
 10. **Beberapa instance backend:** set `APP_REALTIME_MODE=redis`, `APP_RATE_LIMIT_STORE=redis`, dan `APP_STORAGE_TYPE=s3` dengan `APP_STORAGE_S3_BUCKET` (ditambah `APP_STORAGE_S3_ENDPOINT` dan `APP_STORAGE_S3_PATH_STYLE=true` untuk MinIO), lalu aktifkan sticky session untuk `/ws`. Detail ada di [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-limits-and-roadmap).
-11. **IP asli klien / rate limiting:** backend hanya mempercayai `X-Forwarded-For` dari proxy internal (jaringan Docker). Jika situs berada di belakang Cloudflare, pulihkan IP pengunjung di Nginx host, jika tidak semua user akan berbagi IP Cloudflare untuk rate limit:
+11. **Zona waktu:** jadwal ujian dan tenggat tugas dibandingkan dengan jam backend. Image berjalan di `Asia/Jakarta` (WIB); set `APP_TIMEZONE=Asia/Makassar` (WITA) atau `Asia/Jayapura` (WIT) untuk daerah lain. Ubah di luar jam ujian, karena attempt yang sedang berjalan dihitung dengan jam ini.
+12. **IP asli klien / rate limiting:** backend hanya mempercayai `X-Forwarded-For` dari proxy internal (jaringan Docker). Jika situs berada di belakang Cloudflare, pulihkan IP pengunjung di Nginx host, jika tidak semua user akan berbagi IP Cloudflare untuk rate limit:
    ```nginx
    # blok http {} di nginx host — samakan daftarnya dengan https://www.cloudflare.com/ips/
    set_real_ip_from 173.245.48.0/20;   # ...tambahkan semua range IPv4/IPv6 Cloudflare
